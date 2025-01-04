@@ -1,13 +1,16 @@
 import sys
-sys.path.insert(0, "..")
-sys.path.insert(0, ".")
-sys.path.insert(0, "utils")
+import os
 import socket
 from urllib.parse import urlparse
-
 import caldav
 from caldav.elements import dav
 import pprint
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.dirname(script_dir)
+utils_dir = os.path.join(project_dir, "utils")
+sys.path.insert(0, utils_dir)
+
 
 from constants import CALDAV_SERVER_ADDRESS, CALDAV_USERNAME, CALDAV_PASSWORD
 
@@ -62,7 +65,7 @@ def list_calendars_enhanced(caldav_url, username, password):
             print(f"  {i + 1}. Name: {cal.name}, URL: {cal.url}")
 
             # Collection Properties
-            print("     Collection Properties:")
+            print("      Collection Properties:")
             props = cal.get_properties([
                 dav.DisplayName(),
                 dav.Prop(name='{DAV:}description'),
