@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 import socket
 from urllib.parse import urlparse
 import caldav
@@ -8,34 +9,63 @@ import pprint
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_dir = os.path.dirname(script_dir)
-utils_dir = os.path.join(project_dir, "utils")
-sys.path.insert(0, utils_dir)
+config_dir = os.path.join(project_dir, "config")
+sys.path.insert(0, config_dir)
 
 
-from constants import CALDAV_SERVER_ADDRESS, CALDAV_USERNAME, CALDAV_PASSWORD
 
+### CONFIGURATION :: Load ##############################################################
+try:
+    with open(os.path.join(config_dir, "config.json"), 'r') as f:
+        config = json.load(f)
+    caldav_config = config.get("CALDAV_SERVER")
+    if not caldav_config:
+      print("Error: 'CALDAV_SERVER' not found in config.json")
+      sys.exit(1)
+
+    CALDAV_SERVER_ADDRESS = caldav_config.get("CALDAV_SERVER_ADDRESS")
+    CALDAV_USERNAME = caldav_config.get("CALDAV_USERNAME")
+    CALDAV_PASSWORD = caldav_config.get("CALDAV_PASSWORD")
+    if not CALDAV_SERVER_ADDRESS or not CALDAV_USERNAME or not CALDAV_PASSWORD:
+        print("Error: CALDAV configuration not complete in config.json.")
+        sys.exit(1)  # Exit with an error if config is incomplete
+
+except FileNotFoundError:
+    print("Error: config.json not found.")
+    sys.exit(1) # Exit if config.json is not found
+except json.JSONDecodeError:
+    print("Error: config.json is not valid json.")
+    sys.exit(1) # Exit if config.json contains invalid json.
+
+
+
+### FUNCTION :: Server Info #############################################################
 def get_server_info(caldav_url):
     try:
         parsed_url = urlparse(caldav_url)
         hostname = parsed_url.hostname
         port = parsed_url.port if parsed_url.port else (443 if parsed_url.scheme == 'https' else 80)
         ip_address = socket.gethostbyname(hostname)
+        fqdn = socket.getfqdn(hostname)
 
-        return ip_address, port
+        return ip_address, port, fqdn
     except Exception:
-       return None, None
+       return None, None, None
 
 
+
+### FUNCTION :: Calendar List ###########################################################
 def list_calendars_enhanced(caldav_url, username, password):
     client = caldav.DAVClient(
         url=caldav_url, username=username, password=password
     )
     try:
         # SERVER Discovery
-        print("[Server Discovery]")
-        ip_address, port = get_server_info(caldav_url)
-        if ip_address and port:
-            print(f"  Host: {ip_address}")
+        print("[SERVER DISCOVERY]")
+        ip_address, port, fqdn = get_server_info(caldav_url)
+        if ip_address and port and fqdn:
+            print(f"  Addr: {ip_address}")
+            print(f"  Host: {fqdn}")
             print(f"  Port: {port}")
             print(f"  User: {username}\n")
         else:
@@ -43,7 +73,7 @@ def list_calendars_enhanced(caldav_url, username, password):
             print(f"  User: {username}\n")
 
         # CALDAV Principal
-        print("[Caldav Principal]")
+        print("[CALDAV PRINCIPAL]")
         principal = client.principal()
         print(f"  URL: {principal.url}")
 
@@ -60,12 +90,12 @@ def list_calendars_enhanced(caldav_url, username, password):
             print("\nNo calendars found on the server.")
             return
 
-        print("\n[Caldav Calendars]")
+        print("\n[CALDAV CALENDARS]")
         for i, cal in enumerate(calendars):
             print(f"  {i + 1}. Name: {cal.name}, URL: {cal.url}")
 
-            # Collection Properties
-            print("      Collection Properties:")
+            # CALDAV Collection Properties
+            print("     Collection Properties:")
             props = cal.get_properties([
                 dav.DisplayName(),
                 dav.Prop(name='{DAV:}description'),
