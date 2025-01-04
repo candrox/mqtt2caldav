@@ -115,6 +115,4 @@ def list_calendars_enhanced(caldav_url, username, password):
         print(f"An error occurred during calendar discovery: {e}")
 
 if __name__ == "__main__":
-
-    # List calendars enhanced
     list_calendars_enhanced(CALDAV_SERVER_ADDRESS, CALDAV_USERNAME, CALDAV_PASSWORD)
