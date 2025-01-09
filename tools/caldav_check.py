@@ -96,7 +96,7 @@ def list_calendars_enhanced(client):
             print(f"  Link: {cal.url}")
 
             # CALDAV Collection Properties
-            print("     Collection Properties:")
+            print("    Collection Properties:")
             props = cal.get_properties([
                 dav.DisplayName(),
                 dav.Prop(name='{DAV:}description'),
@@ -105,12 +105,12 @@ def list_calendars_enhanced(client):
 
             for prop in props:
                 if isinstance(prop, dav.DisplayName):
-                    print(f"        Display Name: {prop.value}")
+                    print(f"     Display Name: {prop.value}")
                 elif isinstance(prop, dav.Prop):
                   if prop.name == "{DAV:}description" and prop.value is not None:
-                    print(f"        Description: {prop.value}")
+                    print(f"     Description: {prop.value}")
                   elif prop.name == "{urn:ietf:params:xml:ns:caldav}timezone" and prop.value is not None:
-                    print(f"        Timezone: {prop.value}")
+                    print(f"     Timezone: {prop.value}")
     except Exception as e:
         print(f"An error occurred during calendar discovery: {e}")
 
