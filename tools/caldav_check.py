@@ -93,7 +93,7 @@ def list_calendars_enhanced(client):
             if index > 0:
                 print()  # Add an empty line before each 'Name' starting after the first one
             print(f"  Name: {cal.name}")
-            print(f"  Link: {cal.url}")
+            print(f"  Path: {cal.url}")
 
             # CALDAV Collection Properties
             print("    Collection Properties:")
