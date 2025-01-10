@@ -120,10 +120,11 @@ def fetch_event_details(caldav_url, username, password, calendar_url):
                            print(f"  End: {end.dt.strftime('%Y-%m-%d %H:%M:%S')}")
                     else:
                         print(f"  End: {end.dt.strftime('%Y-%m-%d')}")
-                if description:
-                    print(f"  Description: {description}")
                 if location:
                     print(f"  Location: {location}")
+                if description:
+                    print(f"  Description: {description}")
+
 
     except requests.exceptions.RequestException as e:
         if isinstance(e, requests.exceptions.HTTPError) and e.response.status_code == 404:
