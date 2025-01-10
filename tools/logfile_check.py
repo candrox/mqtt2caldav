@@ -128,7 +128,7 @@ def fetch_event_details(caldav_url, username, password, calendar_url):
 
     except requests.exceptions.RequestException as e:
         if isinstance(e, requests.exceptions.HTTPError) and e.response.status_code == 404:
-           print(f"[DAV] Event Not Found | {e}")
+           print(f"[DAV] {e}")
         else:
             print(f"An error occurred while fetching event details: {e}")
 
