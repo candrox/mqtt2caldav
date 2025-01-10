@@ -69,7 +69,7 @@ def list_calendars_enhanced(client):
         # CALDAV Principal
         principal = client.principal()
         print("[CALDAV PRINCIPAL]")
-        print(f"  URL: {principal.url}")
+        print(f"  Path: {principal.url}")
 
         # CALDAV Principal Listing
         props = principal.get_properties([dav.DisplayName()])
