@@ -144,7 +144,7 @@ if __name__ == "__main__":
             if i > 0:
                 print() # Add an empty line before the [LOG] for the second and subsequent outputs
             print("[LOG]")
-            print(f"  URL: {url}")
+            print(f"  Path: {url}")
             print(f"  Date: {date_time_str}")
             fetch_event_details(CALDAV_SERVER_ADDRESS, CALDAV_USERNAME, CALDAV_PASSWORD, url)
     else:
