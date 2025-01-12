@@ -101,27 +101,27 @@ def fetch_event_details(caldav_url, username, password, calendar_url):
                 description = component.get('description')
                 location = component.get('location')
 
-                print(f"  Summary: {summary}")
+                print(f"  Summary:     {summary}")
                 if start:
                     if isinstance(start.dt, datetime):
                         # Handling timezones if present
                         if start.dt.tzinfo:
-                           print(f"  Start: {start.dt.strftime('%Y-%m-%d %H:%M:%S')} ({start.dt.tzinfo})")
+                           print(f"  Start:       {start.dt.strftime('%Y-%m-%d %H:%M:%S')} ({start.dt.tzinfo})")
                         else:
-                           print(f"  Start: {start.dt.strftime('%Y-%m-%d %H:%M:%S')}")
+                           print(f"  Start:       {start.dt.strftime('%Y-%m-%d %H:%M:%S')}")
                     else:
-                        print(f"  Start: {start.dt.strftime('%Y-%m-%d')}")
+                        print(f"  Start:       {start.dt.strftime('%Y-%m-%d')}")
                 if end:
                     if isinstance(end.dt, datetime):
                         # Handling timezones if present
                         if end.dt.tzinfo:
-                            print(f"  End: {end.dt.strftime('%Y-%m-%d %H:%M:%S')} ({end.dt.tzinfo})")
+                            print(f"  End:         {end.dt.strftime('%Y-%m-%d %H:%M:%S')} ({end.dt.tzinfo})")
                         else:
-                           print(f"  End: {end.dt.strftime('%Y-%m-%d %H:%M:%S')}")
+                           print(f"  End:         {end.dt.strftime('%Y-%m-%d %H:%M:%S')}")
                     else:
-                        print(f"  End: {end.dt.strftime('%Y-%m-%d')}")
+                        print(f"  End:         {end.dt.strftime('%Y-%m-%d')}")
                 if location:
-                    print(f"  Location: {location}")
+                    print(f"  Location:    {location}")
                 if description:
                     print(f"  Description: {description}")
 
