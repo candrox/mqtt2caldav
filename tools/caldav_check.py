@@ -14,6 +14,7 @@ config_dir = os.path.join(project_dir, "config")
 sys.path.insert(0, config_dir)
 
 
+
 ### CONFIGURATION :: Load ##############################################################
 try:
     with open(os.path.join(config_dir, "config.json"), 'r') as f:
