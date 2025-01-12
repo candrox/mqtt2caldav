@@ -90,9 +90,6 @@ def fetch_event_details(caldav_url, username, password, calendar_url):
         ical_text = response.text
         calendar = icalendar.Calendar.from_ical(ical_text)
 
-        print("[EVENT]")
-        #print(f"  Event: {calendar_url}") #Removed
-
         for component in calendar.walk():
             if component.name == "VEVENT":
                 summary = component.get('summary')
@@ -128,7 +125,7 @@ def fetch_event_details(caldav_url, username, password, calendar_url):
 
     except requests.exceptions.RequestException as e:
         if isinstance(e, requests.exceptions.HTTPError) and e.response.status_code == 404:
-           print(f"[DAV] {e}")
+           print(f"Error: {e}")
         else:
             print(f"An error occurred while fetching event details: {e}")
 
@@ -143,7 +140,7 @@ if __name__ == "__main__":
         for i, (url, date_time_str) in enumerate(entries):
             if i > 0:
                 print() # Add an empty line before the [LOG] for the second and subsequent outputs
-            print("[LOG]")
+            print("[EVENT]")
             print(f"  Path: {url}")
             print(f"  Date: {date_time_str}")
             fetch_event_details(CALDAV_SERVER_ADDRESS, CALDAV_USERNAME, CALDAV_PASSWORD, url)
