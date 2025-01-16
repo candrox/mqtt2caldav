@@ -99,6 +99,19 @@ Specifies the event location. Use a double backslash to escape a comma.
 <br />
 
 
+**EVENT :: Offset**  
+Specifies the offset for the calendar event start time, configurable in minutes.
+```
+"EVENT_Offset"
+```
+* "" → No offset is applied to the event start time.
+* "+10" → The event start time is set ahead by 10 minutes.
+* "-25" → The event start time is set back by 25 minutes.
+* ...
+<br />
+<br />
+
+
 **EVENT :: Geo**  
 Specifies the event location in latitude and longitude coordinates.
 ```
@@ -163,7 +176,7 @@ Specifies if a calendar event is listed as busy or free.
 
 
 **EVENT :: Time Zone**  
-Specifies the timezone the calendar event is created. List of timezones→ https://<span></span>en.wikipedia.org/wiki/List_of_tz_database_time_zones
+Specifies the timezone the calendar event is created. List of timezones → https://<span></span>en.wikipedia.org/wiki/List_of_tz_database_time_zones
 ```
 "EVENT_TIMEZONE"
 ```
