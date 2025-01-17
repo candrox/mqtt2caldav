@@ -23,7 +23,7 @@ mqtt2caldav is licensed under the [GNU GENERAL PUBLIC LICENSE Version 3](https:/
 
 
 ## Configuration  
-The configuration file is located under `config/config.json` and holds some sample data. 
+The configuration file is located at `config/config.json` and holds some sample data. 
 <br />
 <br />
 
