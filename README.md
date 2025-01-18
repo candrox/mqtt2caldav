@@ -41,7 +41,7 @@ Specifies the MQTT server connection details.
 
 
 **CALDAV SERVER :: Connection**  
-Specifies the CALDAV server connection details.
+Specifies the CalDAV server connection details.
 ```
 "CALDAV_SERVER_ADDRESS": "https://server.com/remote.php/dav/calendars/user",
 "CALDAV_USERNAME": "username",
@@ -52,16 +52,16 @@ Specifies the CALDAV server connection details.
 
 
 **TRIGGER :: Mode**   
-Specifies the event mode.
+Specifies the mode.
 ```
 "MODE"
 ```
-* "Create" → Creates an event 
+* "Create" → Creates a calendar event 
 <br />
 <br />
 
 
-**Trigger :: Topic**   
+**TRIGGER :: MQTT Topic**   
 Specifies the MQTT topic to trigger a calendar event creation.
 ```
 "MQTT_TOPIC"
@@ -74,7 +74,7 @@ Specifies the MQTT topic to trigger a calendar event creation.
 <br />
 
 
-**Trigger :: Event**   
+**TRIGGER :: MQTT Event**   
 Specifies the MQTT event string to trigger a calendar event creation.
 ```
 "MQTT_EVENT"
@@ -87,7 +87,7 @@ Specifies the MQTT event string to trigger a calendar event creation.
 <br />
 
 
-**EVENT :: Calendar**  
+**TRIGGER :: Event Calendar**  
 Specifies the calendar name in which a calendar event is created.
 ```
 "EVENT_CALENDAR"
@@ -99,8 +99,8 @@ Specifies the calendar name in which a calendar event is created.
 <br />
 
 
-**EVENT :: Summary**  
-Specifies the event title.
+**TRIGGER :: Event Summary**  
+Specifies the calendar event title.
 ```
 "EVENT_SUMMARY"
 ```
@@ -112,8 +112,8 @@ Specifies the event title.
 <br />
 
 
-**EVENT :: Location**  
-Specifies the event location. Use a double backslash to escape a comma.
+**TRIGGER :: Event Location**  
+Specifies the calendr event location. Use a double backslash to escape a comma.
 ```
 "EVENT_LOCATION"
 ```
@@ -125,21 +125,8 @@ Specifies the event location. Use a double backslash to escape a comma.
 <br />
 
 
-**EVENT :: Offset**  
-Specifies the offset for the calendar event start time, configurable in minutes.
-```
-"EVENT_Offset"
-```
-* "" → No offset is applied to the event start time.
-* "+10" → The event start time is set ahead by 10 minutes.
-* "-25" → The event start time is set back by 25 minutes.
-* ...
-<br />
-<br />
-
-
-**EVENT :: Geo**  
-Specifies the event location in latitude and longitude coordinates.
+**TRIGGER :: Event Geo**  
+Specifies the calendar event location in latitude and longitude coordinates.
 ```
 "EVENT_GEO"
 ```
@@ -151,7 +138,7 @@ Specifies the event location in latitude and longitude coordinates.
 <br />
 
 
-**EVENT :: Categories**  
+**TRIGGER :: Event Categories**  
 Specifies the category/categories for a calendar event. This field is commonly used for 'Tags' in various calendar apps.
 ```
 "EVENT_CATEGORIES"
@@ -164,7 +151,7 @@ Specifies the category/categories for a calendar event. This field is commonly u
 <br />
 
 
-**EVENT :: URL**  
+**TRIGGER :: Event URL**  
 Specifies a link associated with a calendar event.
 ```
 "EVENT_URL"
@@ -177,7 +164,7 @@ Specifies a link associated with a calendar event.
 <br />
 
 
-**EVENT :: Description**  
+**TRIGGER :: Event Description**  
 Specifies the description for a calendar event.
 ```
 "EVENT_DESCRIPTION"
@@ -190,7 +177,7 @@ Specifies the description for a calendar event.
 <br />
 
 
-**EVENT :: Transparency**  
+**TRIGGER :: Event Transparency**  
 Specifies if a calendar event is listed as busy or free.
 ```
 "EVENT_TRANSP"
@@ -201,7 +188,7 @@ Specifies if a calendar event is listed as busy or free.
 <br />
 
 
-**EVENT :: Time Zone**  
+**TRIGGER :: Event Time Zone**  
 Specifies the timezone the calendar event is created. List of timezones → https://<span></span>en.wikipedia.org/wiki/List_of_tz_database_time_zones
 ```
 "EVENT_TIMEZONE"
@@ -212,9 +199,22 @@ Specifies the timezone the calendar event is created. List of timezones → http
 * ...
 <br />
 <br />
- 
- 
-**EVENT :: Trigger**  
+
+
+**TRIGGER :: Event Offset**  
+Specifies the offset for the calendar event start time, configurable in minutes.
+```
+"EVENT_Offset"
+```
+* "" → No offset is applied to the event start time.
+* "+10" → The event start time is set ahead by 10 minutes.
+* "-25" → The event start time is set back by 25 minutes.
+* ...
+<br />
+<br />
+
+
+**TRIGGER :: Event Trigger**  
 Specifies a calendar event alarm.
 ```
 "EVENT_TRIGGER"
@@ -227,7 +227,7 @@ Specifies a calendar event alarm.
 <br />
 
 
-**EVENT :: Seconds**  
+**TRIGGER :: Event Seconds**  
 Specifies if a calendar event start time and end time will have seconds set.
 ```
 "EVENT_SECONDS"
@@ -238,7 +238,7 @@ Specifies if a calendar event start time and end time will have seconds set.
 <br />
 
 
-**EVENT :: Rounding**  
+**TRIGGER :: Event Rounding**  
 Specifies if a calendar event start time has minutes rounded up or down to the closest defined value.
 ```
 "EVENT_ROUNDING"
@@ -251,7 +251,7 @@ Specifies if a calendar event start time has minutes rounded up or down to the c
 <br />
 
 
-**EVENT :: Duration**  
+**TRIGGER :: Event Duration**  
 Specifies a calendar event duration in minutes.
 ```
 "EVENT_DURATION"
