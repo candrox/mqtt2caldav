@@ -25,6 +25,18 @@ def roundTime(dt=None, dateDelta=timedelta(minutes=1)):
 
 
 
+### FUNCTION :: Offset Time #############################################################
+def adjust_event_time(now_datetime, offset):
+    try:
+        offset_minutes = int(offset)
+        adjusted_time = now_datetime + timedelta(minutes=offset_minutes)
+        return adjusted_time
+    except ValueError:
+        # print(f"[ERROR] Configuration | Invalid EVENT_OFFSET value: {offset}")
+        return now_datetime
+
+
+
 ### FUNCTION :: Connect MQTT Client ####################################################
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -53,14 +65,28 @@ def on_message(client, userdata, message):
 
                 if "action" in mqtt_event:
                     event_location = trigger['EVENT_LOCATION'].replace('\\,', ',')
-                    log_message = f"[M2C] Event Sent     | {message.topic} | {{\"event_summary\":\"{trigger['EVENT_SUMMARY']}\",\"event_location\":\"{event_location}\",\"event_duration\":\"{trigger['EVENT_DURATION']}\"}}"
+                    log_message = f"[M2C] Event Actioned | {message.topic} | {{\"event_summary\":\"{trigger['EVENT_SUMMARY']}\",\"event_location\":\"{event_location}\",\"event_duration\":\"{trigger['EVENT_DURATION']}\"}}"
+
                     logger.info(log_message)
                     print(log_message)
 
-                if trigger['EVENT_ROUNDING'] == '' and trigger['EVENT_ROUNDING'] == '0':
-                    now_datetime = datetime.now()
-                else:
-                    now_datetime = roundTime(datetime.now(), timedelta(minutes=int(trigger['EVENT_ROUNDING'])))
+                now_datetime = datetime.now()
+                
+                # Store original time for comparison with adjusted time
+                original_now_datetime = now_datetime
+
+                if trigger.get('EVENT_OFFSET') and trigger['EVENT_OFFSET'] != '0':
+                   now_datetime = adjust_event_time(now_datetime, trigger['EVENT_OFFSET'])
+                
+                # Check if adjust_event_time returned the original time - meaning there was a invalid 'EVENT_OFFSET' value
+                if now_datetime == original_now_datetime and trigger.get('EVENT_OFFSET') and trigger['EVENT_OFFSET'] != '0':
+                    print(f"[M2C] Event Skipped  | {message.topic} | {{\"event_offset\":\"Invalid EVENT_OFFSET value configured\"}}")
+                    logger.warn(f"[M2C] Event Skipped  | {message.topic} | {{\"event_offset\":\"Invalid EVENT_OFFSET value configured\"}}")
+                    continue
+
+                if trigger['EVENT_ROUNDING'] and trigger['EVENT_ROUNDING'] != '0':
+                    now_datetime = roundTime(now_datetime, timedelta(minutes=int(trigger['EVENT_ROUNDING'])))
+                
                 end_datetime = now_datetime + timedelta(minutes=int(trigger['EVENT_DURATION']))
 
                 if trigger['EVENT_SECONDS'].lower() == 'false':
@@ -107,16 +133,16 @@ END:VALARM
                     str_event = main_event + end_event
                 try:
                     my_event = event_calendar.save_event(str_event)
-                    logger.info(f'[DAV] Event Created  | {message.topic} | {{"event_url":"{my_event.url}"}}')
-                    print(f'[DAV] Event Created  | {message.topic} | {{"event_url":"{my_event.url}"}}')
+                    logger.info(f'[DAV] Event Created  | {message.topic} | {{"event_path":"{my_event.url}"}}')
+                    print(f'[DAV] Event Created  | {message.topic} | {{"event_path":"{my_event.url}"}}')
 
                 except Exception as e:
                     logger.error(f'[DAV] Error Response | {{"caldav_response":"{message.topic} | {e}"}}')
                     print(f'[DAV] Error Response | {{"caldav_response":"{message.topic} | {e}"}}')
 
     except Exception as e:
-        logger.error(f"[ERR] Exception | on_message: {e}")
-        print(f"[ERR] Exception | on_message: {e}")
+        logger.error(f"[ERROR] Exception | on_message: {e}")
+        print(f"[ERROR] Exception | on_message: {e}")
 
 if __name__ == '__main__':
 
