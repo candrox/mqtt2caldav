@@ -28,8 +28,8 @@ The configuration file is located at `config/config.json` and holds some sample 
 <br />
 
 
-**MQTT :: Connection**  
-Specifies the MQTT server connection.
+**MQTT SERVER :: Connection**  
+Specifies the MQTT server connection details.
 ```
 "MQTT_SERVER_ADDRESS": "localhost",
 "MQTT_SERVER_PORT": "1883",
@@ -40,8 +40,8 @@ Specifies the MQTT server connection.
 <br />
 
 
-**CALDAV :: Connection**  
-Specifies the CALDAV server connection.
+**CALDAV SERVER :: Connection**  
+Specifies the CALDAV server connection details.
 ```
 "CALDAV_SERVER_ADDRESS": "https://server.com/remote.php/dav/calendars/user",
 "CALDAV_USERNAME": "username",
@@ -51,12 +51,38 @@ Specifies the CALDAV server connection.
 <br />
 
 
-**MQTT :: Trigger**   
-Specifies the MQTT topic and MQTT event string to trigger a calendar event creation.
+**TRIGGER :: Mode**   
+Specifies the event mode.
 ```
-"MQTT_TOPIC": "mqtt/Main_Switch",
-"MQTT_EVENT": {"action":"on"},
+"MODE"
 ```
+* "Create" → Creates an event 
+<br />
+<br />
+
+
+**Trigger :: Topic**   
+Specifies the MQTT topic to trigger a calendar event creation.
+```
+"MQTT_TOPIC"
+```
+* "mqtt/Main_Switch"
+* "mqtt/OPP_BTN_SQR_601"
+* "mqtt/0x00124b001f8ab0cd"
+* ...
+<br />
+<br />
+
+
+**Trigger :: Event**   
+Specifies the MQTT event string to trigger a calendar event creation.
+```
+"MQTT_EVENT"
+```
+* "{"action":"button_1_single"}"
+* "action":"on"
+* "battery"
+* ...
 <br />
 <br />
 
