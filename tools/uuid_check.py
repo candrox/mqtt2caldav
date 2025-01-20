@@ -8,12 +8,6 @@ import datetime
 
 ### FUNCTION :: UUID ####################################################################
 def decode_uuid(uuid_string):
-  """
-  Decodes a UUID string and prints its component parts, including formatted date/time for Version 1 UUIDs.
-
-  Args:
-    uuid_string: A string representing a UUID.
-  """
   try:
     uuid_obj = uuid.UUID(uuid_string)
     hex_len = len(uuid_obj.hex)
