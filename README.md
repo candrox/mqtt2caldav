@@ -204,7 +204,7 @@ Specifies the timezone the calendar event is created. List of timezones → http
 **TRIGGER :: Event Offset**  
 Specifies the offset for the calendar event start time, configurable in minutes.
 ```
-"EVENT_Offset"
+"EVENT_OFFSET"
 ```
 * "" → No offset is applied to the event start time.
 * "+10" → The event start time is set ahead by 10 minutes.
