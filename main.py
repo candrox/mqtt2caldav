@@ -71,6 +71,17 @@ def on_message(client, userdata, message):
             if trigger['MQTT_TOPIC'] == message.topic and all((k in mqtt_event and mqtt_event[k] == v) for k, v in trigger['MQTT_EVENT'].items()):
                 print(f"[M2C] Event Matched  | {message.topic} | {message.payload.decode('ASCII')}")
                 logger.info(f"[M2C] Event Matched  | {message.topic} | {message.payload.decode('ASCII')}")
+                
+                # Validate 'MODE' first
+                if 'MODE' not in trigger:
+                     logger.warn(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key missing\"}}")
+                     print(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key missing\"}}")
+                     continue
+                
+                if trigger.get('MODE', '').lower() != "create":
+                   logger.warn(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key not allowed\"}}")
+                   print(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key not allowed\"}}")
+                   continue
 
                 if "action" in mqtt_event:
                     event_location = trigger['EVENT_LOCATION'].replace('\\,', ',')
@@ -79,6 +90,7 @@ def on_message(client, userdata, message):
                     logger.info(log_message)
                     print(log_message)
 
+                
                 now_datetime = datetime.now()
 
                 # Store original time for comparison with adjusted time
@@ -105,10 +117,9 @@ def on_message(client, userdata, message):
                     start_time = now_datetime.strftime('%Y%m%dT%H%M%S')
                     end_time = end_datetime.strftime('%Y%m%dT%H%M%S')
 
-                #Check if MODE exists and is set to "Create"
-                if trigger.get('MODE', '').lower() == "create":
-                    event_calendar = caldav.Calendar(client=cal_client, url=trigger['EVENT_CALENDAR'])
-                    main_event = "BEGIN:VCALENDAR\n" \
+                
+                event_calendar = caldav.Calendar(client=cal_client, url=trigger['EVENT_CALENDAR'])
+                main_event = "BEGIN:VCALENDAR\n" \
                         "VERSION:2.0\n" \
                         "PRODID:-//MQTT//EN\n" \
                         "CALSCALE:GREGORIAN\n" \
@@ -125,34 +136,26 @@ def on_message(client, userdata, message):
                         f"CATEGORIES:{trigger['EVENT_CATEGORIES']}\n" \
                         f"CREATED:{start_time}\n"
 
-                    end_event = "END:VEVENT\n" \
-                        "END:VCALENDAR\n"
+                end_event = "END:VEVENT\n" \
+                    "END:VCALENDAR\n"
 
-                    if trigger['EVENT_TRIGGER']:
-                        alarm_event =  "BEGIN:VALARM\n" \
-                                       f"TRIGGER:-PT{trigger['EVENT_TRIGGER']}M\n" \
-                                       "ATTACH;VALUE=URI:Chord\n" \
-                                       "ACTION:AUDIO\n" \
-                                       "END:VALARM\n"
-                        str_event = main_event + alarm_event + end_event
-                    else:
-                        str_event = main_event + end_event
-                    try:
-                        my_event = event_calendar.save_event(str_event)
-                        logger.info(f"[DAV] Event Created  | {message.topic} | {{\"event_path\":\"{my_event.url}\"}}")
-                        print(f"[DAV] Event Created  | {message.topic} | {{\"event_path\":\"{my_event.url}\"}}")
-
-                    except Exception as e:
-                        logger.error(f"[DAV] Error Response | {{\"caldav_response\":\"{message.topic} | {e}\"}}")
-                        print(f"[DAV] Error Response | {{\"caldav_response\":\"{message.topic} | {e}\"}}")
+                if trigger['EVENT_TRIGGER']:
+                    alarm_event =  "BEGIN:VALARM\n" \
+                                   f"TRIGGER:-PT{trigger['EVENT_TRIGGER']}M\n" \
+                                   "ATTACH;VALUE=URI:Chord\n" \
+                                   "ACTION:AUDIO\n" \
+                                   "END:VALARM\n"
+                    str_event = main_event + alarm_event + end_event
                 else:
-                    if trigger.get('MODE') == None:
-                       logger.warn(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key missing\"}}")
-                       print(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key missing\"}}")
-                    else:
-                      logger.warn(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"\'MODE: Create\' not configured, skipping event creation\"}}")
-                      print(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"\'MODE: Create\' not configured, skipping event creation\"}}")
+                    str_event = main_event + end_event
+                try:
+                    my_event = event_calendar.save_event(str_event)
+                    logger.info(f"[DAV] Event Created  | {message.topic} | {{\"event_path\":\"{my_event.url}\"}}")
+                    print(f"[DAV] Event Created  | {message.topic} | {{\"event_path\":\"{my_event.url}\"}}")
 
+                except Exception as e:
+                    logger.error(f"[DAV] Error Response | {{\"caldav_response\":\"{message.topic} | {e}\"}}")
+                    print(f"[DAV] Error Response | {{\"caldav_response\":\"{message.topic} | {e}\"}}")
 
     except Exception as e:
         logger.error(f"[ERROR] Exception | on_message: {e}")
