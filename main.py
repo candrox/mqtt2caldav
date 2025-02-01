@@ -71,25 +71,24 @@ def on_message(client, userdata, message):
             if trigger['MQTT_TOPIC'] == message.topic and all((k in mqtt_event and mqtt_event[k] == v) for k, v in trigger['MQTT_EVENT'].items()):
                 print(f"[M2C] Event Matched  | {message.topic} | {message.payload.decode('ASCII')}")
                 logger.info(f"[M2C] Event Matched  | {message.topic} | {message.payload.decode('ASCII')}")
-                
+
+                if "action" in mqtt_event:
+                    event_location = trigger.get('EVENT_LOCATION', '').replace('\\,', ',')
+                    log_message = f"[M2C] Event Actioned | {message.topic} | {{\"event_summary\":\"{trigger.get('EVENT_SUMMARY')}\",\"event_location\":\"{event_location}\",\"event_duration\":\"{trigger.get('EVENT_DURATION')}\"}}"
+
+                    logger.info(log_message)
+                    print(log_message)
+
                 # Validate 'MODE' first
                 if 'MODE' not in trigger:
-                     logger.warn(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key missing\"}}")
-                     print(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key missing\"}}")
-                     continue
+                    logger.warn(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key missing\"}}")
+                    print(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key missing\"}}")
+                    continue
                 
                 if trigger.get('MODE', '').lower() != "create":
                    logger.warn(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key not allowed\"}}")
                    print(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key not allowed\"}}")
                    continue
-
-                if "action" in mqtt_event:
-                    event_location = trigger['EVENT_LOCATION'].replace('\\,', ',')
-                    log_message = f"[M2C] Event Actioned | {message.topic} | {{\"event_summary\":\"{trigger['EVENT_SUMMARY']}\",\"event_location\":\"{event_location}\",\"event_duration\":\"{trigger['EVENT_DURATION']}\"}}"
-
-                    logger.info(log_message)
-                    print(log_message)
-
                 
                 now_datetime = datetime.now()
 
