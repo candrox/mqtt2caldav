@@ -6,10 +6,19 @@ import json
 import time
 import caldav
 from caldav.lib.error import AuthorizationError
-import utils.logger as logger
-from utils.constants import *
 import paho.mqtt.client as mqttClient
 from datetime import datetime, timedelta
+from utils import logger
+from utils.constants import (
+    MQTT_SERVER_ADDRESS,
+    MQTT_SERVER_PORT,
+    MQTT_USERNAME,
+    MQTT_PASSWORD,
+    CALDAV_SERVER_ADDRESS,
+    CALDAV_USERNAME,
+    CALDAV_PASSWORD,
+    TRIGGERS
+)
 
 
 
@@ -32,7 +41,7 @@ def adjust_event_time(now_datetime, offset):
         adjusted_time = now_datetime + timedelta(minutes=offset_minutes)
         return adjusted_time
     except ValueError:
-        # print(f"[ERROR] Configuration | Invalid EVENT_OFFSET value: {offset}")
+        # logger.error(f"[ERROR] Configuration | Invalid EVENT_OFFSET value: {offset}")
         return now_datetime
 
 
@@ -71,13 +80,13 @@ def on_message(client, userdata, message):
                     print(log_message)
 
                 now_datetime = datetime.now()
-                
+
                 # Store original time for comparison with adjusted time
                 original_now_datetime = now_datetime
 
                 if trigger.get('EVENT_OFFSET') and trigger['EVENT_OFFSET'] != '0':
                    now_datetime = adjust_event_time(now_datetime, trigger['EVENT_OFFSET'])
-                
+
                 # Check if adjust_event_time returned the original time - meaning there was a invalid 'EVENT_OFFSET' value
                 if now_datetime == original_now_datetime and trigger.get('EVENT_OFFSET') and trigger['EVENT_OFFSET'] != '0':
                     print(f"[M2C] Event Skipped  | {message.topic} | {{\"event_offset\":\"Invalid EVENT_OFFSET value configured\"}}")
@@ -86,7 +95,7 @@ def on_message(client, userdata, message):
 
                 if trigger['EVENT_ROUNDING'] and trigger['EVENT_ROUNDING'] != '0':
                     now_datetime = roundTime(now_datetime, timedelta(minutes=int(trigger['EVENT_ROUNDING'])))
-                
+
                 end_datetime = now_datetime + timedelta(minutes=int(trigger['EVENT_DURATION']))
 
                 if trigger['EVENT_SECONDS'].lower() == 'false':
@@ -96,49 +105,54 @@ def on_message(client, userdata, message):
                     start_time = now_datetime.strftime('%Y%m%dT%H%M%S')
                     end_time = end_datetime.strftime('%Y%m%dT%H%M%S')
 
-                event_calendar = caldav.Calendar(client=cal_client, url=trigger['EVENT_CALENDAR'])
-                main_event = f"""
-BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//MQTT//EN
-CALSCALE:GREGORIAN
-BEGIN:VEVENT
-DTSTART;TZID={trigger['EVENT_TIMEZONE']}:{start_time}
-DTEND;TZID={trigger['EVENT_TIMEZONE']}:{end_time}
-DTSTAMP:{start_time}
-LOCATION:{trigger['EVENT_LOCATION']}
-DESCRIPTION:{trigger['EVENT_DESCRIPTION']}
-URL;VALUE=URI:{trigger['EVENT_URL']}
-SUMMARY:{trigger['EVENT_SUMMARY']}
-GEO:{trigger['EVENT_GEO']}
-TRANSP:{trigger['EVENT_TRANSP']}
-CATEGORIES:{trigger['EVENT_CATEGORIES']}
-CREATED:{start_time}
-"""
+                #Check if MODE exists and is set to "Create"
+                if trigger.get('MODE', '').lower() == "create":
+                    event_calendar = caldav.Calendar(client=cal_client, url=trigger['EVENT_CALENDAR'])
+                    main_event = "BEGIN:VCALENDAR\n" \
+                        "VERSION:2.0\n" \
+                        "PRODID:-//MQTT//EN\n" \
+                        "CALSCALE:GREGORIAN\n" \
+                        "BEGIN:VEVENT\n" \
+                        f"DTSTART;TZID={trigger['EVENT_TIMEZONE']}:{start_time}\n" \
+                        f"DTEND;TZID={trigger['EVENT_TIMEZONE']}:{end_time}\n" \
+                        f"DTSTAMP:{start_time}\n" \
+                        f"LOCATION:{trigger['EVENT_LOCATION']}\n" \
+                        f"DESCRIPTION:{trigger['EVENT_DESCRIPTION']}\n" \
+                        f"URL;VALUE=URI:{trigger['EVENT_URL']}\n" \
+                        f"SUMMARY:{trigger['EVENT_SUMMARY']}\n" \
+                        f"GEO:{trigger['EVENT_GEO']}\n" \
+                        f"TRANSP:{trigger['EVENT_TRANSP']}\n" \
+                        f"CATEGORIES:{trigger['EVENT_CATEGORIES']}\n" \
+                        f"CREATED:{start_time}\n"
 
-                end_event = """
-END:VEVENT
-END:VCALENDAR
-"""
-                if trigger['EVENT_TRIGGER']:
-                    alarm_event = f"""
-BEGIN:VALARM
-TRIGGER:-PT{trigger['EVENT_TRIGGER']}M
-ATTACH;VALUE=URI:Chord
-ACTION:AUDIO
-END:VALARM
-"""
-                    str_event = main_event + alarm_event + end_event
+                    end_event = "END:VEVENT\n" \
+                        "END:VCALENDAR\n"
+
+                    if trigger['EVENT_TRIGGER']:
+                        alarm_event =  "BEGIN:VALARM\n" \
+                                       f"TRIGGER:-PT{trigger['EVENT_TRIGGER']}M\n" \
+                                       "ATTACH;VALUE=URI:Chord\n" \
+                                       "ACTION:AUDIO\n" \
+                                       "END:VALARM\n"
+                        str_event = main_event + alarm_event + end_event
+                    else:
+                        str_event = main_event + end_event
+                    try:
+                        my_event = event_calendar.save_event(str_event)
+                        logger.info(f"[DAV] Event Created  | {message.topic} | {{\"event_path\":\"{my_event.url}\"}}")
+                        print(f"[DAV] Event Created  | {message.topic} | {{\"event_path\":\"{my_event.url}\"}}")
+
+                    except Exception as e:
+                        logger.error(f"[DAV] Error Response | {{\"caldav_response\":\"{message.topic} | {e}\"}}")
+                        print(f"[DAV] Error Response | {{\"caldav_response\":\"{message.topic} | {e}\"}}")
                 else:
-                    str_event = main_event + end_event
-                try:
-                    my_event = event_calendar.save_event(str_event)
-                    logger.info(f'[DAV] Event Created  | {message.topic} | {{"event_path":"{my_event.url}"}}')
-                    print(f'[DAV] Event Created  | {message.topic} | {{"event_path":"{my_event.url}"}}')
+                    if trigger.get('MODE') == None:
+                       logger.warn(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key missing\"}}")
+                       print(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"MODE key missing\"}}")
+                    else:
+                      logger.warn(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"\'MODE: Create\' not configured, skipping event creation\"}}")
+                      print(f"[M2C] Event Skipped  | {message.topic} | {{\"event_mode\":\"\'MODE: Create\' not configured, skipping event creation\"}}")
 
-                except Exception as e:
-                    logger.error(f'[DAV] Error Response | {{"caldav_response":"{message.topic} | {e}"}}')
-                    print(f'[DAV] Error Response | {{"caldav_response":"{message.topic} | {e}"}}')
 
     except Exception as e:
         logger.error(f"[ERROR] Exception | on_message: {e}")
@@ -162,8 +176,8 @@ if __name__ == '__main__':
         else:
             print("[DAV] Server Connection Successful | 0 Calendar")
     except AuthorizationError:
-        logger.error(f'[DAV] Server Connection Failed | {CALDAV_USERNAME}@{CALDAV_SERVER_ADDRESS}')
-        print(f'[DAV] Server Connection Failed | {CALDAV_USERNAME}@{CALDAV_SERVER_ADDRESS}')
+        logger.error(f"[DAV] Server Connection Failed | {CALDAV_USERNAME}@{CALDAV_SERVER_ADDRESS}")
+        print(f"[DAV] Server Connection Failed | {CALDAV_USERNAME}@{CALDAV_SERVER_ADDRESS}")
         exit(1)
 
 
