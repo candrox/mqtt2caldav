@@ -1,10 +1,8 @@
 import logging
 import sys
 import os
-
 from utils.constants import LOG_DIR, LOG_FILE
 
-# Ensure LOG_DIR exists, create if missing
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR, exist_ok=True)
 
