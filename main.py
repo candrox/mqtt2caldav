@@ -72,7 +72,6 @@ def connect_caldav(caldav_server_address: str, caldav_username: str, caldav_pass
 ### FUNCTION :: Create CalDAV Event ######################################################
 def create_caldav_event(caldav_client: caldav.DAVClient, event_details: Optional[Dict[str, Any]], topic: str) -> None:
     """Creates an event on the CalDAV server."""
-
     try:
         start_time = event_details['start_time']
         end_time = event_details['end_time']
@@ -317,24 +316,24 @@ if __name__ == '__main__':
     mqtt_client.on_message = lambda client, userdata, message: on_message(caldav_client, client, userdata, message)
     mqtt_client.connect(MQTT_SERVER_ADDRESS, port=int(MQTT_SERVER_PORT))
 
-	# Subscribe To MQTT Topics
+    # Subscribe To MQTT Topics
     for trigger in TRIGGERS:
         mqtt_client.subscribe(trigger['MQTT_TOPIC'])
 
-	# Start MQTT Background Loop
+    # Start MQTT Background Loop
     mqtt_client.loop_start()
     try:
         while True:
             time.sleep(1)
 
-	# Handle User Keyboard Interrupts
+    # Handle User Keyboard Interrupts
     except KeyboardInterrupt:
         logger.warn("[USER] Keyboard Interrupt | Exit")
         print("[USER] Keyboard Interrupt | Exit")
         mqtt_client.disconnect()
         mqtt_client.loop_stop()
 
-	# Handle Main Loop Exceptions
+    # Handle Main Loop Exceptions
     except Exception as e:
         handle_error("Main Loop", e, "Main Loop Exception")
         mqtt_client.disconnect()
