@@ -28,12 +28,12 @@ def __log_msg(msg):
 
 
 def info(msg):
-    logging.info(__log_msg(msg))
+    logger.info(__log_msg(msg))
 
 
 def warn(msg):
-    logging.warning(__log_msg(msg))
+    logger.warning(__log_msg(msg))
 
 
 def error(msg):
-    logging.error(__log_msg(msg))
+    logger.error(__log_msg(msg))
