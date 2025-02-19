@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-
-### MODULES :: Import ##################################################################
 import sys
 import os
 import json
@@ -18,13 +15,13 @@ sys.path.insert(0, config_dir)
 
 
 
-### USER CONFIGURATION ##################################################################
+### USER CONFIGURATION ###################################################################
 LOG_FILE_PATH = "/home/pi/mqtt2caldav/logs/mqtt2caldav.log"  # User-configurable log file path
 URLS_TO_FETCH = 3  # User-configurable number of last logged URLs to fetch
 
 
 
-### CONFIGURATION :: Load ##############################################################
+### CONFIGURATION :: Load CalDAV Config ##################################################
 try:
     with open(os.path.join(config_dir, "config.json"), 'r') as f:
         config = json.load(f)
@@ -49,7 +46,7 @@ except json.JSONDecodeError:
 
 
 
-### FUNCTION :: Extract Log Details ####################################################
+### FUNCTION :: Extract Log Details ######################################################
 def get_ics_urls_and_timestamps_from_log(log_file, num_urls):
     entries = []
     try:
@@ -64,7 +61,6 @@ def get_ics_urls_and_timestamps_from_log(log_file, num_urls):
                     # Normalize the URL: remove leading/trailing whitespace
                    url = url.strip()
 
-                   # Validate URL
                    try:
                        result = urlparse(url)
                        if all([result.scheme, result.netloc]):
@@ -72,14 +68,14 @@ def get_ics_urls_and_timestamps_from_log(log_file, num_urls):
                           if len(entries) >= num_urls:
                               break
                    except:
-                      print(f"Error: Invalid URL format: {url}")
+                      print(f"  Error: Invalid URL format: {url}")
                       continue
             return entries
     except FileNotFoundError:
-        print(f"Error: Log file not found: {log_file}")
+        print(f"  Error: Log file not found: {log_file}")
         return []
     except Exception as e:
-        print(f"Error reading log file: {e}")
+        print(f"  Error reading log file: {e}")
         return []
 
 
@@ -101,34 +97,34 @@ def fetch_event_details(caldav_url, username, password, calendar_url):
                 description = component.get('description')
                 location = component.get('location')
 
-                print(f"  Summary:     {summary}")
+                print(f"  Summary:  {summary}")
                 if start:
                     if isinstance(start.dt, datetime):
                         # Handling timezones if present
                         if start.dt.tzinfo:
-                           print(f"  Start:       {start.dt.strftime('%Y-%m-%d %H:%M:%S')} ({start.dt.tzinfo})")
+                           print(f"  Start:    {start.dt.strftime('%Y-%m-%d %H:%M:%S')} ({start.dt.tzinfo})")
                         else:
-                           print(f"  Start:       {start.dt.strftime('%Y-%m-%d %H:%M:%S')}")
+                           print(f"  Start:    {start.dt.strftime('%Y-%m-%d %H:%M:%S')}")
                     else:
-                        print(f"  Start:       {start.dt.strftime('%Y-%m-%d')}")
+                        print(f"  Start:    {start.dt.strftime('%Y-%m-%d')}")
                 if end:
                     if isinstance(end.dt, datetime):
                         # Handling timezones if present
                         if end.dt.tzinfo:
-                            print(f"  End:         {end.dt.strftime('%Y-%m-%d %H:%M:%S')} ({end.dt.tzinfo})")
+                            print(f"  End:      {end.dt.strftime('%Y-%m-%d %H:%M:%S')} ({end.dt.tzinfo})")
                         else:
-                           print(f"  End:         {end.dt.strftime('%Y-%m-%d %H:%M:%S')}")
+                           print(f"  End:      {end.dt.strftime('%Y-%m-%d %H:%M:%S')}")
                     else:
-                        print(f"  End:         {end.dt.strftime('%Y-%m-%d')}")
+                        print(f"  End:      {end.dt.strftime('%Y-%m-%d')}")
                 if location:
-                    print(f"  Location:    {location}")
+                    print(f"  Location: {location}")
                 if description:
                     print(f"  Description: {description}")
 
 
     except requests.exceptions.RequestException as e:
         if isinstance(e, requests.exceptions.HTTPError) and e.response.status_code == 404:
-           print(f"Error: {e}")
+           print(f"  Error:    {e}")
         else:
             print(f"An error occurred while fetching event details: {e}")
 
@@ -136,6 +132,8 @@ def fetch_event_details(caldav_url, username, password, calendar_url):
         print(f"An error occurred while processing the event details: {e}")
 
 
+
+### MAIN #################################################################################
 if __name__ == "__main__":
     entries = get_ics_urls_and_timestamps_from_log(LOG_FILE_PATH, URLS_TO_FETCH)
 
@@ -144,8 +142,8 @@ if __name__ == "__main__":
             if i > 0:
                 print() # Add an empty line before the [LOG] for the second and subsequent outputs
             print("[EVENT]")
-            print(f"  Path: {url}")
-            print(f"  Date: {date_time_str}")
+            print(f"  Path:     {url}")
+            print(f"  Date:     {date_time_str}")
             fetch_event_details(CALDAV_SERVER_ADDRESS, CALDAV_USERNAME, CALDAV_PASSWORD, url)
     else:
         print("No valid calendar URL found in the log file.")
