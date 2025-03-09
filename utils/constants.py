@@ -1,7 +1,8 @@
+### SECTION :: Module Imports ############################################################
 import os
 import json
 
-# PATHS
+### SECTION :: Path Definitions ##########################################################
 _cur_dir = os.path.dirname(os.path.realpath(__file__))
 ROOT_DIR = os.path.join(_cur_dir, os.pardir)
 LOG_DIR = os.path.join(ROOT_DIR, 'logs')
@@ -9,6 +10,8 @@ LOG_FILE = "mqtt2caldav.log"
 CONF_DIR = os.path.join(ROOT_DIR, 'config')
 CONF_FILE = "config.json"
 
+
+### SECTION :: JSON Constants ############################################################
 with open(os.path.join(CONF_DIR, CONF_FILE)) as json_file:
     json_data = json.load(json_file)
     MQTT_SERVER_ADDRESS = json_data['MQTT_SERVER']['MQTT_SERVER_ADDRESS']
