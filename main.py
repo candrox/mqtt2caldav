@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-# VERSION :: 20250215.1809
-# COMMENT :: Updated functions and error handling
+# VERSION :: 20250302.0830
+# COMMENT :: Updated log events with log level prefixes
 
 
 
-### MODULES ##############################################################################
+### SECTION :: Module Imports ############################################################
 import os
 import sys
 import json
@@ -35,11 +35,11 @@ def load_config(config_file: str = "config/config.json") -> Dict[str, Any]:
             loaded_config: Dict[str, Any] = json.load(f)
             return loaded_config
     except FileNotFoundError as e:
-        logger.error(f"[ERROR] Config | Config file not found: {config_path} | {type(e).__name__}: {e}")
+        logger.error(f"[Config] Config file not found: {config_path} | {type(e).__name__}: {e}")
         print(f"[ERROR] Config | Config file not found: {config_path} | {type(e).__name__}: {e}")
         sys.exit(1)
     except json.JSONDecodeError as e:
-        logger.error(f"[ERROR] Config | Invalid JSON format in config file: {config_path} | {type(e).__name__}: {e}")
+        logger.error(f"[Config] Invalid JSON format in config file: {config_path} | {type(e).__name__}: {e}")
         print(f"[ERROR] Config | Invalid JSON format in config file: {config_path} | {type(e).__name__}: {e}")
         sys.exit(1)
 
@@ -53,8 +53,8 @@ def connect_caldav(caldav_server_address: str, caldav_username: str, caldav_pass
         my_principal = caldav_client.principal()
         calendars = my_principal.calendars()
         if calendars:
-            logger.info(f"[DAV] Server Connection Successful | {caldav_username}@{caldav_server_address}")
-            print(f"[DAV] Server Connection Successful | {caldav_username}@{caldav_server_address}")
+            logger.info(f"[DAV] Server Connection Successful  | {caldav_username}@{caldav_server_address}")
+            print(f"[DAV] Server Connection Successful  | {caldav_username}@{caldav_server_address}")
             for calendar in calendars:
                 print(f"[DAV] {calendar.name:<20} {calendar.url}")
         else:
@@ -112,7 +112,7 @@ def create_caldav_event(caldav_client: caldav.DAVClient, event_details: Optional
         print(f"[DAV] Event Created  | {topic} | {{\"event_path\":\"{caldav_event.url}\"}}")
 
     except Exception as e:
-        logger.error(f"CalDAV Event Creation: {topic} | Error: {e}") # More basic error handling
+        logger.error(f"CalDAV Event Creation: {topic} | Error: {e}")
         print(f"[ERROR] CalDAV Event Creation: {topic} | Error: {e}")
 
 
@@ -137,25 +137,26 @@ def on_message(caldav_client: caldav.DAVClient, mqtt_client: MQTTClient, userdat
         parsed_mqtt_event: Dict[str, Any] = json.loads(mqtt_message.payload.decode('ASCII'))
 
         for config_trigger in config['TRIGGERS']:
-            # Check topic first.
+            # Check if the MQTT topic from the config matches the received MQTT message topic
             if config_trigger['MQTT_TOPIC'] != mqtt_message.topic:
                 continue  # Skip to the next trigger if the topic doesn't match
 
-            # If topic matches, check if the MQTT event matches the trigger
+            # Check if the MQTT event payload matches the trigger configuration
             if match_mqtt_event(parsed_mqtt_event, config_trigger, mqtt_message):
                 logger.info(f"[M2C] Event Matched  | {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')}")
                 print(f"[M2C] Event Matched  | {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')}")
 
-                # Validate MODE *only if* the event matches
+                # Validate MODE only if the event matches a configured trigger
                 if not validate_mode(config_trigger, mqtt_message):
-                    logger.warn(f"[M2C] Event Skipped  | {mqtt_message.topic} | {{\"event_mode\":\"MODE key not allowed\"}}")
+                    logger.error(f"[M2C] Event Skipped  | {mqtt_message.topic} | {{\"event_mode\":\"MODE key not allowed\"}}")
                     print(f"[M2C] Event Skipped  | {mqtt_message.topic} | {{\"event_mode\":\"MODE key not allowed\"}}")
-                    break  # Exit the loop: We found a matching topic and event, but mode is wrong.
+                    break  # Exit the loop: We found a matching topic and event, but MODE is wrong.
 
                 event_details = None  # Initialize event_details
                 try:
                     event_details = create_event_details(config_trigger, parsed_mqtt_event)
 
+                    # Check if 'action' key exists in the parsed MQTT event payload to perform action specific logging
                     if "action" in parsed_mqtt_event:
                         event_location = config_trigger.get('EVENT_LOCATION', '').replace('\\,', ',')
                         actioned_log_message = f"[M2C] Event Actioned | {mqtt_message.topic} | {{\"event_summary\":\"{config_trigger.get('EVENT_SUMMARY', '')}\",\"event_location\":\"{event_location}\",\"event_duration\":\"{config_trigger.get('EVENT_DURATION', '')}\"}}"
@@ -166,8 +167,8 @@ def on_message(caldav_client: caldav.DAVClient, mqtt_client: MQTTClient, userdat
                     break  # Stop processing triggers after successful event creation
 
                 except ValueError as e: # Catch ValueError from create_event_details
-                    logger.error(f"[M2C] Event Skipped  | {mqtt_message.topic} | {{\"event_offset\":\"Invalid EVENT_OFFSET value configured\"}}") #Removed:  | {type(e).__name__}: {e}
-                    print(f"[M2C] Event Skipped  | {mqtt_message.topic} | {{\"event_offset\":\"Invalid EVENT_OFFSET value configured\"}}")  #Removed:  | {type(e).__name__}: {e}
+                    logger.error(f"[M2C] Event Skipped  | {mqtt_message.topic} | {{\"event_offset\":\"Invalid EVENT_OFFSET value configured\"}}")
+                    print(f"[M2C] Event Skipped  | {mqtt_message.topic} | {{\"event_offset\":\"Invalid EVENT_OFFSET value configured\"}}")
                     break # Break on event_details creation error
                 except Exception as event_creation_error:
                     logger.error(f"Error creating event for {mqtt_message.topic} | {type(event_creation_error).__name__}: {event_creation_error}")
@@ -175,11 +176,11 @@ def on_message(caldav_client: caldav.DAVClient, mqtt_client: MQTTClient, userdat
                     break  # Stop on error
 
     except json.JSONDecodeError as json_decode_error:
-        logger.error(f"[ERROR] Message Handling | Invalid JSON: {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')} | {type(json_decode_error).__name__}: {json_decode_error}")
+        logger.error(f"[Message Handling] Invalid JSON: {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')} | {type(json_decode_error).__name__}: {json_decode_error}")
         print(f"[ERROR] Message Handling | Invalid JSON: {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')} | {type(json_decode_error).__name__}: {json_decode_error}")
 
     except Exception as generic_message_error:
-        logger.error(f"[ERROR] Generic Message Handling | Error processing message on topic: {mqtt_message.topic} with payload: {mqtt_message.payload.decode('ASCII')} | {type(generic_message_error).__name__}: {generic_message_error}")
+        logger.error(f"[Generic Message Handling] Error processing message on topic: {mqtt_message.topic} with payload: {mqtt_message.payload.decode('ASCII')} | {type(generic_message_error).__name__}: {generic_message_error}")
         print(f"[ERROR] Generic Message Handling | Error processing message on topic: {mqtt_message.topic} with payload: {mqtt_message.payload.decode('ASCII')} | {type(generic_message_error).__name__}: {generic_message_error}")
 
 
@@ -194,7 +195,6 @@ def match_mqtt_event(mqtt_event: Dict[str, Any], trigger: Dict[str, Any], messag
     for key, value in trigger['MQTT_EVENT'].items():
         if key not in mqtt_event or mqtt_event[key] != value:
             return False
-
     return True
 
 
@@ -220,7 +220,6 @@ def roundTime(dt: Optional[datetime] = None, rounding_minutes: timedelta = timed
     seconds = (dt - dt.min).seconds
     rounding = (seconds + roundTo/2) // roundTo * roundTo
     return dt + timedelta(0, rounding-seconds, -dt.microsecond)
-    # https://stackoverflow.com/questions/3463930/how-to-round-the-minute-of-a-datetime-object
 
 
 
@@ -249,9 +248,8 @@ def create_event_details(config_trigger: Dict[str, Any], parsed_mqtt_event: Dict
         if now_datetime == original_now_datetime and config_trigger.get('EVENT_OFFSET') and config_trigger['EVENT_OFFSET'] != '0':
             raise ValueError("Invalid EVENT_OFFSET value configured")
 
-    except ValueError:  # Catch the ValueError locally. Don't log here, log in on_message
-        raise  # Re-raise ValueError to be caught in on_message
-
+    except ValueError:
+        raise
 
     if config_trigger['EVENT_ROUNDING'] and config_trigger['EVENT_ROUNDING'] != '0':
         now_datetime = roundTime(now_datetime, timedelta(minutes=int(config_trigger['EVENT_ROUNDING'])))
