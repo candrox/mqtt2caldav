@@ -16,8 +16,8 @@ sys.path.insert(0, config_dir)
 
 
 ### USER CONFIGURATION ###################################################################
-LOG_FILE_PATH = "/home/pi/mqtt2caldav/logs/mqtt2caldav.log"  # User-configurable log file path
-URLS_TO_FETCH = 3  # User-configurable number of last logged URLs to fetch
+LOG_FILE_PATH = "/home/pi/mqtt2caldav/logs/mqtt2caldav.log"
+URLS_TO_FETCH = 3
 
 
 
