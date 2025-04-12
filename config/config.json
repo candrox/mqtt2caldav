@@ -71,6 +71,12 @@
       "EVENT_SECONDS": "False",
       "EVENT_ROUNDING": "0",
       "EVENT_DURATION": "60"
+    },
+  
+    {
+      "MODE": "Delete",
+      "MQTT_TOPIC": "mqtt/Light_Switch_Entrance_Hall",
+      "MQTT_EVENT": {"action":"on"}
     }
   ]
 }
