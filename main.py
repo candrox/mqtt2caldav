@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-# VERSION :: 20250302.0830
-# COMMENT :: Updated log events with log level prefixes
+### SECTION :: Version ###################################################################
+VERSION = "20250412.1200"
 
 
 
@@ -14,16 +14,18 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
 import caldav
-from caldav.lib.error import AuthorizationError
+from caldav.lib.error import AuthorizationError, DAVError, NotFoundError
+
 import paho.mqtt.client as mqttClient
 from paho.mqtt.client import Client as MQTTClient, MQTTMessage
 
 from utils import logger
+from utils.constants import LOG_FILE, LOG_DIR, APP_NAME, CONF_DIR, CONF_FILE
 
 
 
 ### FUNCTION :: Load Config File #########################################################
-def load_config(config_file: str = "config/config.json") -> Dict[str, Any]:
+def load_config(config_file: str = os.path.join(CONF_DIR, CONF_FILE)) -> Dict[str, Any]:
     """Loads configuration from a JSON file and returns a dictionary."""
     try:
         if not os.path.isabs(config_file):
@@ -33,14 +35,15 @@ def load_config(config_file: str = "config/config.json") -> Dict[str, Any]:
              config_path = os.path.abspath(config_file)
         with open(config_path, 'r') as f:
             loaded_config: Dict[str, Any] = json.load(f)
+            logger.info(f"[APP] Config File Load Successful   | {{\"config_path\":\"{config_path}\"}}")
             return loaded_config
+
     except FileNotFoundError as e:
-        logger.error(f"[Config] Config file not found: {config_path} | {type(e).__name__}: {e}")
-        print(f"[ERROR] Config | Config file not found: {config_path} | {type(e).__name__}: {e}")
+        logger.error(f"[CONF] File not found: {config_path} | {type(e).__name__}: {e}")
         sys.exit(1)
+
     except json.JSONDecodeError as e:
-        logger.error(f"[Config] Invalid JSON format in config file: {config_path} | {type(e).__name__}: {e}")
-        print(f"[ERROR] Config | Invalid JSON format in config file: {config_path} | {type(e).__name__}: {e}")
+        logger.error(f"[CONF] Invalid JSON: {config_path} | {type(e).__name__}: {e}")
         sys.exit(1)
 
 
@@ -53,18 +56,21 @@ def connect_caldav(caldav_server_address: str, caldav_username: str, caldav_pass
         my_principal = caldav_client.principal()
         calendars = my_principal.calendars()
         if calendars:
-            logger.info(f"[DAV] Server Connection Successful  | {caldav_username}@{caldav_server_address}")
-            print(f"[DAV] Server Connection Successful  | {caldav_username}@{caldav_server_address}")
+            logger.info(f"[DAV] Server Connection Successful  | {{\"caldav_host\":\"{caldav_username}@{caldav_server_address}\"}}")
             for calendar in calendars:
-                print(f"[DAV] {calendar.name:<20} {calendar.url}")
+                logger.debug(f"[DAV] {calendar.name:<20} {calendar.url}")
         else:
-            print("[DAV] Server Connection Successful | No calendars found")
+            logger.debug("[DAV] Server Connection Successful | No calendars found")
         return caldav_client
+
     except AuthorizationError as e:
         handle_error(f"[DAV] Server Connection Failed | {caldav_username}@{caldav_server_address}", e, "CalDAV Connection")
         sys.exit(1)
-    except Exception as e:
+    except DAVError as e:
         handle_error(f"[DAV] Server Connection Failed | {caldav_username}@{caldav_server_address}", e, "CalDAV Connection")
+        sys.exit(1)
+    except Exception as e:
+        handle_error(f"[DAV] Server Connection Failed | {caldav_username}@{caldav_server_address} | Unexpected Error", e, "CalDAV Connection")
         sys.exit(1)
 
 
@@ -109,11 +115,56 @@ def create_caldav_event(caldav_client: caldav.DAVClient, event_details: Optional
         event_calendar = caldav.Calendar(client=caldav_client, url=event_details['event_calendar_url'])
         caldav_event = event_calendar.save_event(str_event)
         logger.info(f"[DAV] Event Created  | {topic} | {{\"event_path\":\"{caldav_event.url}\"}}")
-        print(f"[DAV] Event Created  | {topic} | {{\"event_path\":\"{caldav_event.url}\"}}")
 
+    except KeyError as e:
+        logger.error(f"[DAV] Event Create Error | {topic} | Config Error: Missing event detail key: {e}")
+    except ValueError as e:
+        logger.error(f"[DAV] Event Create Error | {topic} | Data Error: Invalid event detail value: {e}")
+    except DAVError as e:
+        logger.error(f"[DAV] Event Create Error | {topic} | CalDAV Server Error: {type(e).__name__}: {e}")
     except Exception as e:
-        logger.error(f"CalDAV Event Creation: {topic} | Error: {e}")
-        print(f"[ERROR] CalDAV Event Creation: {topic} | Error: {e}")
+        logger.error(f"[DAV] Event Create Error | {topic} | Unexpected Error: {type(e).__name__}: {e}")
+
+
+
+### FUNCTION :: Delete CalDAV Event ######################################################
+def delete_caldav_event(caldav_client: caldav.DAVClient, event_url: str, topic: str) -> None:
+    """Deletes a CalDAV event from the server."""
+    try:
+        event = caldav.Event(client=caldav_client, url=event_url)
+        event.delete()
+        logger.info(f"[DAV] Event Deleted  | {topic} | {{\"event_path\":\"{event_url}\"}}")
+
+    except NotFoundError as e:
+        logger.error(f"[DAV] Event Delete Error | {topic} | Not Found Error: Event URL not found: {event_url}")
+    except DAVError as e:
+        logger.error(f"[DAV] Event Delete Error | {topic} | CalDAV Server Error: {type(e).__name__}: {e}")
+    except Exception as e:
+        logger.error(f"[DAV] Event Delete Error | {topic} | Unexpected Error: {type(e).__name__}: {e}")
+
+
+
+### FUNCTION :: Find Last Created Event URL ##############################################
+def find_last_created_event_url() -> Optional[str]:
+    """Searches the log file for the last created event URL."""
+    log_file_path = os.path.join(LOG_DIR, LOG_FILE)
+    if not os.path.exists(log_file_path):
+        return None
+
+    with open(log_file_path, 'r') as logfile:
+        lines = logfile.readlines()
+
+        for line in reversed(lines): # Iterate from log file end
+            if "[DAV] Event Created" in line:
+                try:
+                    json_str_start = line.find('{')
+                    if json_str_start != -1:
+                        json_str = line[json_str_start:]
+                        event_data = json.loads(json_str)
+                        return event_data.get("event_path")
+                except json.JSONDecodeError:
+                    logger.warn(f"[Log] Invalid JSON: {line.strip()}")
+    return None
 
 
 
@@ -121,9 +172,9 @@ def create_caldav_event(caldav_client: caldav.DAVClient, event_details: Optional
 def on_connect(client: MQTTClient, userdata, flags, rc: int) -> None:
     """Callback function for MQTT connection events. Logs the connection status."""
     if rc == 0:
-        logger.info(f"[MQTT] Broker Connection Successful | {config['MQTT_SERVER']['MQTT_USERNAME']}@{config['MQTT_SERVER']['MQTT_SERVER_ADDRESS']}:{config['MQTT_SERVER']['MQTT_SERVER_PORT']}")
+        logger.info(f"[MQT] Broker Connection Successful  | {{\"mqtt_host\":\"{config['MQTT_SERVER']['MQTT_USERNAME']}@{config['MQTT_SERVER']['MQTT_SERVER_ADDRESS']}:{config['MQTT_SERVER']['MQTT_SERVER_PORT']}\"}}")
     else:
-        logger.error(f"[MQTT] Broker Connection Failed | {config['MQTT_SERVER']['MQTT_USERNAME']}@{config['MQTT_SERVER']['MQTT_SERVER_ADDRESS']}:{config['MQTT_SERVER']['MQTT_SERVER_PORT']}")
+        logger.error(f"[MQT] Broker Connection Failed  | {config['MQTT_SERVER']['MQTT_USERNAME']}@{config['MQTT_SERVER']['MQTT_SERVER_ADDRESS']}:{config['MQTT_SERVER']['MQTT_SERVER_PORT']}")
 
 
 
@@ -131,10 +182,10 @@ def on_connect(client: MQTTClient, userdata, flags, rc: int) -> None:
 def on_message(caldav_client: caldav.DAVClient, mqtt_client: MQTTClient, userdata, mqtt_message: MQTTMessage) -> None:
     """Callback function for processing received MQTT messages."""
     try:
-        logger.info(f"[M2C] Event Received | {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')}")
-        print(f"[M2C] Event Received | {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')}")
-
         parsed_mqtt_event: Dict[str, Any] = json.loads(mqtt_message.payload.decode('ASCII'))
+
+        logger.info(f"[APP] Event Received | {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')}")
+        logger.debug(f"[APP] Event Received | {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')}")
 
         for config_trigger in config['TRIGGERS']:
             # Check if the MQTT topic from the config matches the received MQTT message topic
@@ -143,45 +194,64 @@ def on_message(caldav_client: caldav.DAVClient, mqtt_client: MQTTClient, userdat
 
             # Check if the MQTT event payload matches the trigger configuration
             if match_mqtt_event(parsed_mqtt_event, config_trigger, mqtt_message):
-                logger.info(f"[M2C] Event Matched  | {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')}")
-                print(f"[M2C] Event Matched  | {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')}")
+                logger.info(f"[APP] Event Matched  | {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')}")
+                logger.debug(f"[APP] Event Matched  | {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')}")
 
-                # Validate MODE only if the event matches a configured trigger
+                # Validate mode
+                trigger_mode = config_trigger.get('MODE', '').lower()
                 if not validate_mode(config_trigger, mqtt_message):
-                    logger.error(f"[M2C] Event Skipped  | {mqtt_message.topic} | {{\"event_mode\":\"MODE key not allowed\"}}")
-                    print(f"[M2C] Event Skipped  | {mqtt_message.topic} | {{\"event_mode\":\"MODE key not allowed\"}}")
+                    logger.error(f"[APP] Event Skipped  | {mqtt_message.topic} | {{\"event_mode\":\"MODE key not allowed\"}}")
                     break  # Exit the loop: We found a matching topic and event, but MODE is wrong.
 
-                event_details = None  # Initialize event_details
-                try:
-                    event_details = create_event_details(config_trigger, parsed_mqtt_event)
+				### Handle "CREATE" mode
+                if trigger_mode == "create":
+                    event_details = None
+                    try:
+                        event_details = create_event_details(config_trigger, parsed_mqtt_event)
 
-                    # Check if 'action' key exists in the parsed MQTT event payload to perform action specific logging
-                    if "action" in parsed_mqtt_event:
-                        event_location = config_trigger.get('EVENT_LOCATION', '').replace('\\,', ',')
-                        actioned_log_message = f"[M2C] Event Actioned | {mqtt_message.topic} | {{\"event_summary\":\"{config_trigger.get('EVENT_SUMMARY', '')}\",\"event_location\":\"{event_location}\",\"event_duration\":\"{config_trigger.get('EVENT_DURATION', '')}\"}}"
-                        logger.info(actioned_log_message)
-                        print(actioned_log_message)
+                        # Check if 'action' key exists in the parsed MQTT event payload to perform action specific logging
+                        if "action" in parsed_mqtt_event:
+                            event_location = config_trigger.get('EVENT_LOCATION', '').replace('\\,', ',')
+                            actioned_log_message = f"[APP] Event Actioned | {mqtt_message.topic} | {{\"event_mode\":\"{trigger_mode}\", \"event_summary\":\"{config_trigger.get('EVENT_SUMMARY', '')}\",\"event_location\":\"{event_location}\",\"event_duration\":\"{config_trigger.get('EVENT_DURATION', '')}\"}}"
+                            logger.info(actioned_log_message)
 
-                    create_caldav_event(caldav_client, event_details, mqtt_message.topic)  # If all's good to this point
-                    break  # Stop processing triggers after successful event creation
+                        create_caldav_event(caldav_client, event_details, mqtt_message.topic)
+                        break  # Stop processing after create
 
-                except ValueError as e: # Catch ValueError from create_event_details
-                    logger.error(f"[M2C] Event Skipped  | {mqtt_message.topic} | {{\"event_offset\":\"Invalid EVENT_OFFSET value configured\"}}")
-                    print(f"[M2C] Event Skipped  | {mqtt_message.topic} | {{\"event_offset\":\"Invalid EVENT_OFFSET value configured\"}}")
-                    break # Break on event_details creation error
-                except Exception as event_creation_error:
-                    logger.error(f"Error creating event for {mqtt_message.topic} | {type(event_creation_error).__name__}: {event_creation_error}")
-                    print(f"[ERROR] Event creating event for {mqtt_message.topic} | {type(event_creation_error).__name__}: {event_creation_error}")
-                    break  # Stop on error
+                    except ValueError as e: # Catch ValueError from create_event_details
+                        logger.error(f"[APP] Event Skipped  | {mqtt_message.topic} | {{\"event_offset\":\"Invalid EVENT_OFFSET value configured\"}}")
+                        break
+                    except KeyError as e:
+                        logger.error(f"[APP] Event Skipped  | {mqtt_message.topic} | Config Error in trigger: Missing key: {e}")
+                        break
+                    except Exception as event_creation_error:
+                        logger.error(f"[APP] Event Create Error | {mqtt_message.topic} | Unexpected Error: {type(event_creation_error).__name__}: {event_creation_error}")
+                        break
+
+				### Handle "DELETE" mode
+                elif trigger_mode == "delete":
+                    logger.info(f"[APP] Event Actioned | {mqtt_message.topic} | {{\"event_mode\":\"{trigger_mode}\"}}")
+
+                    try:
+                        event_url_to_delete = find_last_created_event_url()
+                        if event_url_to_delete:
+                            delete_caldav_event(caldav_client, event_url_to_delete, mqtt_message.topic)
+                        else:
+                            logger.warn(f"[APP] Event Skipped  | {mqtt_message.topic} | {{\"event_delete\":\"No event to delete found in logs\"}}")
+
+                    except NotFoundError as e:
+                        logger.error(f"[APP] Event Delete Error | {mqtt_message.topic} | Not Found Error: Event URL not found in logs")
+                        break
+                    except Exception as event_deletion_error:
+                        logger.error(f"[APP] Event Delete Error | {mqtt_message.topic} | Unexpected Error: {type(event_deletion_error).__name__}: {event_deletion_error}")
+                    break
 
     except json.JSONDecodeError as json_decode_error:
-        logger.error(f"[Message Handling] Invalid JSON: {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')} | {type(json_decode_error).__name__}: {json_decode_error}")
-        print(f"[ERROR] Message Handling | Invalid JSON: {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')} | {type(json_decode_error).__name__}: {json_decode_error}")
-
+        logger.error(f"[APP] Invalid JSON: {mqtt_message.topic} | {mqtt_message.payload.decode('ASCII')} | {type(json_decode_error).__name__}: {json_decode_error}")
+    except KeyError as e:
+        logger.error(f"[APP] Processing Error | {mqtt_message.topic} | Config Error: Missing key in trigger or MQTT event: {e}")
     except Exception as generic_message_error:
-        logger.error(f"[Generic Message Handling] Error processing message on topic: {mqtt_message.topic} with payload: {mqtt_message.payload.decode('ASCII')} | {type(generic_message_error).__name__}: {generic_message_error}")
-        print(f"[ERROR] Generic Message Handling | Error processing message on topic: {mqtt_message.topic} with payload: {mqtt_message.payload.decode('ASCII')} | {type(generic_message_error).__name__}: {generic_message_error}")
+        logger.error(f"[APP] Processing Error | {mqtt_message.topic} | Unexpected Error: {type(generic_message_error).__name__}: {generic_message_error}")
 
 
 
@@ -205,7 +275,8 @@ def validate_mode(trigger: Dict[str, Any], message: MQTTMessage) -> bool:
     if 'MODE' not in trigger:
          return False
 
-    if trigger.get('MODE', '').lower() != "create":
+    allowed_modes = ["create", "delete"]
+    if trigger.get('MODE', '').lower() not in allowed_modes:
        return False
     return True
 
@@ -285,13 +356,14 @@ def create_event_details(config_trigger: Dict[str, Any], parsed_mqtt_event: Dict
 ### FUNCTION :: Error Handling ###########################################################
 def handle_error(message: str, exception: Exception, stage: str = "general") -> None:
     """Logs error messages consistently"""
-    logger.error(message)
-    print(f"[ERROR] {stage} | {message} | {type(exception).__name__}: {exception}")
+    logger.error(f"[{stage}] Error: {message} | {type(exception).__name__}: {exception}")
 
 
 
 ### MAIN #################################################################################
 if __name__ == '__main__':
+    # Log Application Start
+    logger.info(f"[SYS] App Load Successful           | {{\"app_name\":\"{APP_NAME}\", \"version\":\"{VERSION}\"}}")
 
     # Load MQTT Config File
     config = load_config()
@@ -308,7 +380,7 @@ if __name__ == '__main__':
     caldav_client = connect_caldav(CALDAV_SERVER_ADDRESS, CALDAV_USERNAME, CALDAV_PASSWORD)
 
     # Initialize MQTT Connection
-    mqtt_client = mqttClient.Client("MQTT2CALDAV")
+    mqtt_client = mqttClient.Client(APP_NAME)
     mqtt_client.username_pw_set(MQTT_USERNAME, password=MQTT_PASSWORD)
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = lambda client, userdata, message: on_message(caldav_client, client, userdata, message)
@@ -322,17 +394,22 @@ if __name__ == '__main__':
     mqtt_client.loop_start()
     try:
         while True:
-            time.sleep(1)
+            try:
+                time.sleep(1)
+            except KeyboardInterrupt:
+                raise
+            except Exception as loop_op_error:
+                logger.error(f"[APP] Main Loop Error | {type(loop_op_error).__name__}: {loop_op_error}")
+                continue
 
     # Handle User Keyboard Interrupts
     except KeyboardInterrupt:
-        logger.warn("[USER] Keyboard Interrupt | Exit")
-        print("[USER] Keyboard Interrupt | Exit")
+        logger.warn("[USR] Keyboard Interrupt | Exit")
         mqtt_client.disconnect()
         mqtt_client.loop_stop()
 
     # Handle Main Loop Exceptions
     except Exception as e:
-        handle_error("Main Loop", e, "Main Loop Exception")
+        logger.error(f"[APP] Main Loop Error | {type(e).__name__}: {e}")
         mqtt_client.disconnect()
         mqtt_client.loop_stop()
