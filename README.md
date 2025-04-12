@@ -56,7 +56,8 @@ Specifies the mode.
 ```
 "MODE"
 ```
-* "Create" → Creates a calendar event 
+* "Create" → Creates a calendar event as defined in 'config.json'.
+* "Deletes" → Deletes the last calendar event found in 'mqtt2caldav.log'. 
 <br />
 <br />
 
