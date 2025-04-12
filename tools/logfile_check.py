@@ -1,13 +1,16 @@
+### SECTION :: Module Imports ############################################################
 import sys
 import os
 import json
 import requests
 import icalendar
 from datetime import datetime
-import pytz
 import re
 from urllib.parse import urlparse
+import pytz
 
+
+### SECTION :: Path Configuration ########################################################
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_dir = os.path.dirname(script_dir)
 config_dir = os.path.join(project_dir, "config")
@@ -15,13 +18,13 @@ sys.path.insert(0, config_dir)
 
 
 
-### USER CONFIGURATION ###################################################################
+### SECTION :: User Configuration ########################################################
 LOG_FILE_PATH = "/home/pi/mqtt2caldav/logs/mqtt2caldav.log"
 URLS_TO_FETCH = 3
 
 
 
-### CONFIGURATION :: Load CalDAV Config ##################################################
+### SECTION :: Configuration Load ########################################################
 try:
     with open(os.path.join(config_dir, "config.json"), 'r') as f:
         config = json.load(f)
@@ -53,7 +56,7 @@ def get_ics_urls_and_timestamps_from_log(log_file, num_urls):
         with open(log_file, 'r') as f:
             lines = f.readlines()
             for line in reversed(lines):
-                match = re.search(r'(\d{4}-\d{2}-\d{2})\s(\d{2}:\d{2}:\d{2}).*(https?://[^\s]+\.ics)', line)
+                match = re.search(r'(\d{4}/\d{2}/\d{2})\s(\d{2}:\d{2}:\d{2}).*Event Created.*\{\"event_path\":\"(https?://[^\s]+\.ics)\"\}', line)
                 if match:
                    date_str = match.group(1)
                    time_str = match.group(2)
@@ -87,7 +90,7 @@ def fetch_event_details(caldav_url, username, password, calendar_url):
         response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
 
         ical_text = response.text
-        calendar = icalendar.Calendar.from_ical(ical_text)
+        calendar = icalendar.Calendar.from_ical(ical_text) # RESTORED: Use icalendar to parse
 
         for component in calendar.walk():
             if component.name == "VEVENT":
@@ -119,7 +122,7 @@ def fetch_event_details(caldav_url, username, password, calendar_url):
                 if location:
                     print(f"  Location: {location}")
                 if description:
-                    print(f"  Description: {description}")
+                    print(f"  Descript: {description}")
 
 
     except requests.exceptions.RequestException as e:
@@ -133,17 +136,17 @@ def fetch_event_details(caldav_url, username, password, calendar_url):
 
 
 
-### MAIN #################################################################################
+### SECTION :: Main Execution ##########################################################
 if __name__ == "__main__":
     entries = get_ics_urls_and_timestamps_from_log(LOG_FILE_PATH, URLS_TO_FETCH)
 
     if entries:
         for i, (url, date_time_str) in enumerate(entries):
             if i > 0:
-                print() # Add an empty line before the [LOG] for the second and subsequent outputs
+                print() # Add an empty line before the [EVENT] for the second and subsequent outputs
             print("[EVENT]")
             print(f"  Path:     {url}")
-            print(f"  Date:     {date_time_str}")
+            print(f"  Created:  {date_time_str}") # Changed "Date:" to "Created:"
             fetch_event_details(CALDAV_SERVER_ADDRESS, CALDAV_USERNAME, CALDAV_PASSWORD, url)
     else:
         print("No valid calendar URL found in the log file.")
