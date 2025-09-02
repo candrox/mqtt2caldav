@@ -23,7 +23,7 @@ mqtt2caldav is licensed under the [GNU GENERAL PUBLIC LICENSE Version 3](https:/
 <br />
 
 
-## Configuration  
+## Settings  
 The settings files is located at `config/settings.json` and holds some sample data. 
 <br />
 <br />
@@ -70,10 +70,10 @@ Specifies the CalDAV server connection details.
 <br />
 
 
+## Triggers  
 The triggers files is located at `config/triggers.json` and holds some sample data. 
 <br />
 <br />
-
 
 
 **TRIGGER :: Mode**   
