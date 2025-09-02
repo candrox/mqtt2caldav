@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+VERSION = "20250902.0950"
+
+
 ### SECTION :: Module Imports ############################################################
 import sys
 import os
@@ -19,32 +23,32 @@ sys.path.insert(0, config_dir)
 
 
 ### SECTION :: User Configuration ########################################################
-LOG_FILE_PATH = "/home/pi/mqtt2caldav/logs/mqtt2caldav.log"
+LOG_FILE_PATH = os.path.join(project_dir, "logs", "mqtt2caldav.log")
 URLS_TO_FETCH = 3
 
 
 
 ### SECTION :: Configuration Load ########################################################
 try:
-    with open(os.path.join(config_dir, "config.json"), 'r') as f:
+    with open(os.path.join(config_dir, "settings.json"), 'r') as f:
         config = json.load(f)
     caldav_config = config.get("CALDAV_SERVER")
     if not caldav_config:
-      print("Error: 'CALDAV_SERVER' not found in config.json")
+      print("Error: 'CALDAV_SERVER' not found in settings.json", file=sys.stderr)
       sys.exit(1)
 
     CALDAV_SERVER_ADDRESS = caldav_config.get("CALDAV_SERVER_ADDRESS")
     CALDAV_USERNAME = caldav_config.get("CALDAV_USERNAME")
     CALDAV_PASSWORD = caldav_config.get("CALDAV_PASSWORD")
     if not CALDAV_SERVER_ADDRESS or not CALDAV_USERNAME or not CALDAV_PASSWORD:
-        print("Error: CALDAV configuration not complete in config.json.")
+        print("Error: CALDAV configuration not complete in settings.json.", file=sys.stderr)
         sys.exit(1)  # Exit with an error if config is incomplete
 
 except FileNotFoundError:
-    print("Error: config.json not found.")
+    print("Error: settings.json not found.", file=sys.stderr)
     sys.exit(1) # Exit if config.json is not found
 except json.JSONDecodeError:
-    print("Error: config.json is not valid json.")
+    print("Error: settings.json is not valid json.", file=sys.stderr)
     sys.exit(1) # Exit if config.json contains invalid json.
 
 
@@ -56,29 +60,28 @@ def get_ics_urls_and_timestamps_from_log(log_file, num_urls):
         with open(log_file, 'r') as f:
             lines = f.readlines()
             for line in reversed(lines):
-                match = re.search(r'(\d{4}/\d{2}/\d{2})\s(\d{2}:\d{2}:\d{2}).*Event Created.*\{\"event_path\":\"(https?://[^\s]+\.ics)\"\}', line)
+                match = re.search(r"(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}).*Event Created.*event_path='(https?://[^']+\.ics)'", line)
                 if match:
-                   date_str = match.group(1)
-                   time_str = match.group(2)
-                   url = match.group(3)
+                   date_time_str = match.group(1)
+                   url = match.group(2)
                     # Normalize the URL: remove leading/trailing whitespace
                    url = url.strip()
 
                    try:
                        result = urlparse(url)
                        if all([result.scheme, result.netloc]):
-                          entries.append((url, f"{date_str} {time_str}"))
+                          entries.append((url, date_time_str))
                           if len(entries) >= num_urls:
                               break
-                   except:
-                      print(f"  Error: Invalid URL format: {url}")
+                   except Exception as e:
+                      print(f"  Error: Invalid URL format: {url} ({e})", file=sys.stderr)
                       continue
             return entries
     except FileNotFoundError:
-        print(f"  Error: Log file not found: {log_file}")
+        print(f"  Error: Log file not found: {log_file}", file=sys.stderr)
         return []
     except Exception as e:
-        print(f"  Error reading log file: {e}")
+        print(f"  Error reading log file: {e}", file=sys.stderr)
         return []
 
 
@@ -127,12 +130,12 @@ def fetch_event_details(caldav_url, username, password, calendar_url):
 
     except requests.exceptions.RequestException as e:
         if isinstance(e, requests.exceptions.HTTPError) and e.response.status_code == 404:
-           print(f"  Error:    {e}")
+           print(f"  Error:    {e}", file=sys.stderr)
         else:
-            print(f"An error occurred while fetching event details: {e}")
+            print(f"An error occurred while fetching event details: {e}", file=sys.stderr)
 
     except Exception as e:
-        print(f"An error occurred while processing the event details: {e}")
+        print(f"An error occurred while processing the event details: {e}", file=sys.stderr)
 
 
 
