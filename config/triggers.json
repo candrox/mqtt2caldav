@@ -1,0 +1,67 @@
+[
+    {
+      "MODE": "Create",
+      "MQTT_TOPIC": "mqtt/0x00124b001f8ab0cd",
+      "MQTT_EVENT": {"action":"single"},
+      "EVENT_CALENDAR": "https://example.com/own/remote.php/dav/cal/home/meetings/",
+      "EVENT_SUMMARY": "Meeting Awesome Inc",
+      "EVENT_LOCATION": "12 Main Road\\, 3456 Town\\, Antarctica",
+      "EVENT_GEO": "48.85299;2.36885",
+      "EVENT_CATEGORIES": "Meeting",
+      "EVENT_URL": "http://company.com",
+      "EVENT_TRANSP": "TRANSPARENT",
+      "EVENT_DESCRIPTION": "Meeting to discuss new product launches",
+      "EVENT_TIMEZONE": "Asia/Singapore",
+      "EVENT_OFFSET": "",
+      "EVENT_TRIGGER": "15",
+      "EVENT_SECONDS": "False",
+      "EVENT_ROUNDING": "5",
+      "EVENT_DURATION": "10"
+    },
+
+    {
+      "MODE": "Create",
+      "MQTT_TOPIC": "mqtt/Light_Switch_Entrance_Hall",
+      "MQTT_EVENT": {"action":"on"},
+      "EVENT_CALENDAR": "https://example.com/own/remote.php/dav/cal/private/automation/",
+      "EVENT_SUMMARY": "Lights Switched On",
+      "EVENT_LOCATION": "Entrance Hall",
+      "EVENT_GEO": "38.8977;77.0365",
+      "EVENT_CATEGORIES": "Automation",
+      "EVENT_URL": "",
+      "EVENT_TRANSP": "TRANSPARENT",
+      "EVENT_DESCRIPTION": "Lights switched on in entrance hall",
+      "EVENT_TIMEZONE": "Asia/Singapore",
+      "EVENT_OFFSET": "+10",
+      "EVENT_TRIGGER": "0",
+      "EVENT_SECONDS": "False",
+      "EVENT_ROUNDING": "0",
+      "EVENT_DURATION": "60"
+    },
+
+    {
+      "MODE": "Create",
+      "MQTT_TOPIC": "mqtt/Switch",
+      "MQTT_EVENT": {"battery":"12"},
+      "EVENT_CALENDAR": "https://example.com/own/remote.php/dav/cal/system/alerts/",
+      "EVENT_SUMMARY": "Switch 1 Battery Alert",
+      "EVENT_LOCATION": "Datacenter A",
+      "EVENT_GEO": "",
+      "EVENT_CATEGORIES": "Alert",
+      "EVENT_URL": "",
+      "EVENT_TRANSP": "OPAQUE",
+      "EVENT_DESCRIPTION": "Switch 1 Battery Low",
+      "EVENT_TIMEZONE": "Asia/Singapore",
+      "EVENT_OFFSET": "-15",
+      "EVENT_TRIGGER": "0",
+      "EVENT_SECONDS": "False",
+      "EVENT_ROUNDING": "0",
+      "EVENT_DURATION": "1"
+    },
+
+    {
+      "MODE": "Delete",
+      "MQTT_TOPIC": "mqtt/Light_Switch_Entrance_Hall",
+      "MQTT_EVENT": {"action":"on"}
+    }
+  ]
