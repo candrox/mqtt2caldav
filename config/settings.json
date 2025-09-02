@@ -1,0 +1,29 @@
+{
+  "APPLICATION_SETTINGS": {
+    "LOG_LEVEL": "DEBUG",
+    "LOG_PREFIXES": {
+      "APPLICATION": "[APP]",
+      "CALDAV": "[DAV]",
+      "MQTT": "[MQT]",
+      "SYSTEM": "[SYS]",
+      "USER": "[USR]"
+    }
+  },
+
+  "MQTT_SERVER":{
+    "MQTT_SERVER_ADDRESS": "localhost",
+    "MQTT_SERVER_PORT": "1883",
+    "MQTT_USERNAME": "username",
+    "MQTT_PASSWORD": "password"
+  },
+
+  "CALDAV_SERVER":{
+    "CALDAV_SERVER_ADDRESS": "https://server.com/remote.php/dav/calendars/home",
+    "CALDAV_USERNAME": "username",
+    "CALDAV_PASSWORD": "password",
+    "CALDAV_SERVER_RETRY_ATTEMPTS": 3,
+    "CALDAV_SERVER_RETRY_DELAY_SECONDS": 60,
+    "CALDAV_EVENT_RETRY_ATTEMPTS": 3,
+    "CALDAV_EVENT_RETRY_DELAY_SECONDS": 60
+  }
+}
