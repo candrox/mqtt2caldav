@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+VERSION = "20250902.0950"
 
-### MODULES :: Import ##################################################################
+
+### SECTION :: Module Imports ############################################################
 import sys
 import os
 import json
@@ -15,28 +17,27 @@ config_dir = os.path.join(project_dir, "config")
 sys.path.insert(0, config_dir)
 
 
-
 ### CONFIGURATION :: Load ##############################################################
 try:
-    with open(os.path.join(config_dir, "config.json"), 'r') as f:
+    with open(os.path.join(config_dir, "settings.json"), 'r') as f:
         config = json.load(f)
     caldav_config = config.get("CALDAV_SERVER")
     if not caldav_config:
-        print("Error: 'CALDAV_SERVER' not found in config.json")
+        print("Error: 'CALDAV_SERVER' not found in settings.json")
         sys.exit(1)
 
     CALDAV_SERVER_ADDRESS = caldav_config.get("CALDAV_SERVER_ADDRESS")
     CALDAV_USERNAME = caldav_config.get("CALDAV_USERNAME")
     CALDAV_PASSWORD = caldav_config.get("CALDAV_PASSWORD")
     if not CALDAV_SERVER_ADDRESS or not CALDAV_USERNAME or not CALDAV_PASSWORD:
-        print("Error: CALDAV configuration not complete in config.json. Missing CALDAV_SERVER_ADDRESS, CALDAV_USERNAME, or CALDAV_PASSWORD.")
+        print("Error: CALDAV configuration not complete in settings.json. Missing CALDAV_SERVER_ADDRESS, CALDAV_USERNAME, or CALDAV_PASSWORD.")
         sys.exit(1)  # Exit with an error if config is incomplete
 
 except FileNotFoundError:
-    print("Error: config.json not found.")
+    print("Error: settings.json not found.")
     sys.exit(1) # Exit if config.json is not found
 except json.JSONDecodeError:
-    print("Error: config.json is not valid json.")
+    print("Error: settings.json is not valid json.")
     sys.exit(1) # Exit if config.json contains invalid json.
 
 
@@ -50,6 +51,9 @@ def get_server_info(caldav_url):
         fqdn = socket.getfqdn(hostname)
 
         return ip_address, port, fqdn
+    except socket.gaierror as e:
+        print(f"Error resolving hostname '{hostname}': {e}")
+        return None, None, None
     except Exception as e:
         print(f"Error getting server info: {e}")
         return None, None, None
@@ -113,11 +117,28 @@ def list_calendars_enhanced(client):
                     print(f"     Description: {prop.value}")
                   elif prop.name == "{urn:ietf:params:xml:ns:caldav}timezone" and prop.value is not None:
                     print(f"     Timezone: {prop.value}")
+    except caldav.lib.error.AuthorizationError:
+        # This is unlikely to be triggered here if the client object is already created,
+        # but it is good practice for robustness.
+        print("\nError: Authentication failed during calendar discovery.")
+    except caldav.lib.error.DAVError as e:
+        print(f"\nA CalDAV server error occurred during discovery: {e}")
     except Exception as e:
-        print(f"An error occurred during calendar discovery: {e}")
+        print(f"An unexpected error occurred during calendar discovery: {e}")
 
 if __name__ == "__main__":
-    client = caldav.DAVClient(
-        url=CALDAV_SERVER_ADDRESS, username=CALDAV_USERNAME, password=CALDAV_PASSWORD
-    )
-    list_calendars_enhanced(client)
+    try:
+        client = caldav.DAVClient(
+            url=CALDAV_SERVER_ADDRESS, username=CALDAV_USERNAME, password=CALDAV_PASSWORD
+        )
+        list_calendars_enhanced(client)
+    except caldav.lib.error.AuthorizationError:
+        print("\nError: Authentication failed. Please check your username and password in settings.json.")
+        sys.exit(1)
+    except caldav.lib.error.DAVError as e:
+        print(f"\nError: A server error occurred. Please check the CALDAV_SERVER_ADDRESS.")
+        print(f"Details: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\nAn unexpected error occurred during connection: {e}")
+        sys.exit(1)
