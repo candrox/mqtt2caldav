@@ -1,2 +1,3 @@
-paho-mqtt
 caldav
+paho-mqtt
+requests
