@@ -2,6 +2,7 @@
 VERSION = "20250902.0950"
 
 
+
 ### SECTION :: Module Imports ############################################################
 import sys
 import os
@@ -17,7 +18,8 @@ config_dir = os.path.join(project_dir, "config")
 sys.path.insert(0, config_dir)
 
 
-### CONFIGURATION :: Load ##############################################################
+
+### CONFIGURATION :: Load ################################################################
 try:
     with open(os.path.join(config_dir, "settings.json"), 'r') as f:
         config = json.load(f)
@@ -41,7 +43,8 @@ except json.JSONDecodeError:
     sys.exit(1) # Exit if config.json contains invalid json.
 
 
-### FUNCTION :: Server Info #############################################################
+
+### FUNCTION :: Server Info ##############################################################
 def get_server_info(caldav_url):
     try:
         parsed_url = urlparse(caldav_url)
@@ -59,7 +62,8 @@ def get_server_info(caldav_url):
         return None, None, None
 
 
-### FUNCTION :: Calendar List ###########################################################
+
+### FUNCTION :: Calendar List ############################################################
 def list_calendars_enhanced(client):
     try:
         # SERVER Discovery
@@ -118,14 +122,15 @@ def list_calendars_enhanced(client):
                   elif prop.name == "{urn:ietf:params:xml:ns:caldav}timezone" and prop.value is not None:
                     print(f"     Timezone: {prop.value}")
     except caldav.lib.error.AuthorizationError:
-        # This is unlikely to be triggered here if the client object is already created,
-        # but it is good practice for robustness.
         print("\nError: Authentication failed during calendar discovery.")
     except caldav.lib.error.DAVError as e:
         print(f"\nA CalDAV server error occurred during discovery: {e}")
     except Exception as e:
         print(f"An unexpected error occurred during calendar discovery: {e}")
 
+
+
+### MAIN #################################################################################
 if __name__ == "__main__":
     try:
         client = caldav.DAVClient(
