@@ -16,14 +16,29 @@ mqtt2caldav is licensed under the [GNU GENERAL PUBLIC LICENSE Version 3](https:/
 ## Requirements  
 * MQTT Server Connection
 * CALDAV Server Connection
-* [paho-mqtt](https://pypi.org/project/paho-mqtt/)
 * [caldav](https://pypi.org/project/caldav/)
+* [paho-mqtt](https://pypi.org/project/paho-mqtt/)
+* [requests](https://pypi.org/project/requests/)
 <br />
 <br />
 
 
 ## Configuration  
-The configuration file is located at `config/config.json` and holds some sample data. 
+The settings files is located at `config/settings.json` and holds some sample data. 
+<br />
+<br />
+
+
+**APPLICATION :: Settings**  
+Specifies the application log level and log prefixes.
+```
+"LOG_LEVEL": "DEBUG"
+"APPLICATION": "[APP]"
+"CALDAV": "[DAV]"
+"MQTT": "[MQT]"
+"SYSTEM": "[SYS]"
+"USER": "[USR]"
+ ```
 <br />
 <br />
 
@@ -31,9 +46,9 @@ The configuration file is located at `config/config.json` and holds some sample 
 **MQTT SERVER :: Connection**  
 Specifies the MQTT server connection details.
 ```
-"MQTT_SERVER_ADDRESS": "localhost",
-"MQTT_SERVER_PORT": "1883",
-"MQTT_USERNAME": "username",
+"MQTT_SERVER_ADDRESS": "localhost"
+"MQTT_SERVER_PORT": "1883"
+"MQTT_USERNAME": "username"
 "MQTT_PASSWORD": "password"
  ```
 <br />
@@ -43,12 +58,22 @@ Specifies the MQTT server connection details.
 **CALDAV SERVER :: Connection**  
 Specifies the CalDAV server connection details.
 ```
-"CALDAV_SERVER_ADDRESS": "https://server.com/remote.php/dav/calendars/user",
-"CALDAV_USERNAME": "username",
+"CALDAV_SERVER_ADDRESS": "https://server.com/remote.php/dav/calendars/user"
+"CALDAV_USERNAME": "username"
 "CALDAV_PASSWORD": "password"
+"CALDAV_SERVER_RETRY_ATTEMPTS": 3
+"CALDAV_SERVER_RETRY_DELAY_SECONDS": 60
+"CALDAV_EVENT_RETRY_ATTEMPTS": 3
+"CALDAV_EVENT_RETRY_DELAY_SECONDS": 60
  ```
 <br />
 <br />
+
+
+The triggers files is located at `config/triggers.json` and holds some sample data. 
+<br />
+<br />
+
 
 
 **TRIGGER :: Mode**   
@@ -57,7 +82,7 @@ Specifies the mode.
 "MODE"
 ```
 * "Create" → Creates a calendar event as defined in 'config.json'.
-* "Deletes" → Deletes the last calendar event found in 'mqtt2caldav.log'. 
+* "Delete" → Deletes the last calendar event found in 'mqtt2caldav.log'. 
 <br />
 <br />
 
