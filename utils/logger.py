@@ -32,9 +32,7 @@ class LowercaseLevelFormatter(logging.Formatter):
 
 ### SECTION :: Logger And Handler Configuration ##########################################
 formatter = LowercaseLevelFormatter(
-	# Alternative to add milliseconds to time-stamps
-    # fmt='%(levelname_padded)s %(asctime)s.%(msecs)03d: %(message)s',
-    fmt='%(levelname_padded)s %(asctime)s %(message)s',
+    fmt='%(levelname_padded)s %(asctime)s.%(msecs)03d %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
@@ -43,7 +41,7 @@ logger = logging.getLogger(APP_NAME)
 logger.setLevel(logging.INFO)
 
 # Create File Handler
-file_handler = logging.FileHandler(log_fn)
+file_handler = logging.FileHandler(log_fn, encoding='utf-8')
 file_handler.setFormatter(formatter)
 
 # Create Stream Handler
