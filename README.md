@@ -14,8 +14,9 @@ mqtt2caldav is licensed under the [GNU GENERAL PUBLIC LICENSE Version 3](https:/
 
 
 ## Requirements  
-* MQTT Server Connection
-* CALDAV Server Connection
+* MQTT Broker (e.g. [Mosquitto](https://mosquitto.org/))
+* CALDAV Server (e.g. [NextCloud](https://github.com/nextcloud/server), [Baïkal](https://github.com/sabre-io/Baikal), [Radicale](https://github.com/Kozea/Radicale))
+* [Python 3.7+](https://www.python.org/downloads/release/python-370/)
 * [caldav](https://pypi.org/project/caldav/)
 * [paho-mqtt](https://pypi.org/project/paho-mqtt/)
 * [requests](https://pypi.org/project/requests/)
