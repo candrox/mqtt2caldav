@@ -30,7 +30,7 @@ The settings files is located at `config/settings.json` and holds some sample da
 
 
 **APPLICATION :: Settings**  
-Specifies the application log level and log prefixes.
+Specifies the application log level.
 ```
 "LOG_LEVEL": "DEBUG"
 ```
@@ -41,7 +41,7 @@ Specifies the application log prefixes.
 "MQTT": "[MQT]"
 "SYSTEM": "[SYS]"
 "USER": "[USR]"
- ```
+```
 <br />
 <br />
 
@@ -53,15 +53,15 @@ Specifies the MQTT server connection details.
 "MQTT_SERVER_PORT": "1883"
 "MQTT_USERNAME": "username"
 "MQTT_PASSWORD": "password"
- ```
- Specifies the MQTT quality of service level.
- ```
+```
+Specifies the MQTT quality of service level.
+```
 "MQTT_QOS": 1
 ```
 Specifies the shutdown delay to complete pending MQTT QoS delivery handshakes.
 ```
 "MQTT_QOS_DISCONNECT_SECONDS": 2.0
- ```
+```
 <br />
 <br />
 
@@ -73,7 +73,7 @@ Specifies the CalDAV server connection details.
 "CALDAV_USERNAME": "username"
 "CALDAV_PASSWORD": "password"
 ```
-Specifies the maximum connection attempts to the calendar server during startup.
+Specifies the maximum connection attempts to the CalDAV during startup.
 ```
 "CALDAV_SERVER_RETRY_ATTEMPTS": 3
 ```
@@ -85,7 +85,7 @@ Specifies the maximum retry attempts for failing event creations or deletions.
 ```
 "CALDAV_EVENT_RETRY_ATTEMPTS": 3
 ```
-Specifies the initial wait time in seconds between event synchronization retries.
+Specifies the wait time in seconds between retry attempts.
 ```
 "CALDAV_EVENT_RETRY_DELAY_SECONDS": 60
 ```
