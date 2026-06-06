@@ -205,9 +205,9 @@ Specifies a link associated with a calendar event.
 ```
 "EVENT_URL"
 ```
-* "http://something.com"
-* "http://buymoremilk.com"
-* "http://eatmorechicken.com"
+* "http://<span></span>something.com"
+* "http://<span></span>buymoremilk.com"
+* "http://<span></span>eatmorechicken.com"
 * ...
 <br />
 <br />
@@ -238,7 +238,7 @@ Specifies if a calendar event is listed as busy or free.
 
 
 **TRIGGER :: Event Time Zone**  
-Specifies the timezone the calendar event is created. List of timezones → https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+Specifies the timezone the calendar event is created. List of timezones → https://<span></span>en.wikipedia.org/wiki/List_of_tz_database_time_zones
 ```
 "EVENT_TIMEZONE"
 ```
