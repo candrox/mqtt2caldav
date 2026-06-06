@@ -77,7 +77,7 @@ Specifies the maximum connection attempts to the CalDAV during startup.
 ```
 "CALDAV_SERVER_RETRY_ATTEMPTS": 3
 ```
-Specifies the wait time in seconds between initial server connection attempts.
+Specifies the wait time in seconds between CalDAV connection attempts.
 ```
 "CALDAV_SERVER_RETRY_DELAY_SECONDS": 60
 ```
