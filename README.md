@@ -33,6 +33,9 @@ The settings files is located at `config/settings.json` and holds some sample da
 Specifies the application log level and log prefixes.
 ```
 "LOG_LEVEL": "DEBUG"
+```
+Specifies the application log prefixes.
+```
 "APPLICATION": "[APP]"
 "CALDAV": "[DAV]"
 "MQTT": "[MQT]"
@@ -51,6 +54,14 @@ Specifies the MQTT server connection details.
 "MQTT_USERNAME": "username"
 "MQTT_PASSWORD": "password"
  ```
+ Specifies the MQTT quality of service level.
+ ```
+"MQTT_QOS": 1
+```
+Specifies the shutdown delay to complete pending MQTT QoS delivery handshakes.
+```
+"MQTT_QOS_DISCONNECT_SECONDS": 2.0
+ ```
 <br />
 <br />
 
@@ -61,11 +72,23 @@ Specifies the CalDAV server connection details.
 "CALDAV_SERVER_ADDRESS": "https://server.com/remote.php/dav/calendars/user"
 "CALDAV_USERNAME": "username"
 "CALDAV_PASSWORD": "password"
+```
+Specifies the maximum connection attempts to the calendar server during startup.
+```
 "CALDAV_SERVER_RETRY_ATTEMPTS": 3
+```
+Specifies the wait time in seconds between initial server connection attempts.
+```
 "CALDAV_SERVER_RETRY_DELAY_SECONDS": 60
+```
+Specifies the maximum retry attempts for failing event creations or deletions.
+```
 "CALDAV_EVENT_RETRY_ATTEMPTS": 3
+```
+Specifies the initial wait time in seconds between event synchronization retries.
+```
 "CALDAV_EVENT_RETRY_DELAY_SECONDS": 60
- ```
+```
 <br />
 <br />
 
