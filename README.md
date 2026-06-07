@@ -55,11 +55,11 @@ Specifies the MQTT server connection details.
 "MQTT_USERNAME": "username"
 "MQTT_PASSWORD": "password"
 ```
-Specifies the MQTT quality of service level.
+Specifies the MQTT service quality level.
 ```
 "MQTT_QOS": 1
 ```
-Specifies the shutdown delay to complete pending MQTT QoS delivery handshakes.
+Specifies the application shutdown delay to complete outstanding tasks.
 ```
 "MQTT_QOS_DISCONNECT_SECONDS": 2.0
 ```
@@ -74,7 +74,7 @@ Specifies the CalDAV server connection details.
 "CALDAV_USERNAME": "username"
 "CALDAV_PASSWORD": "password"
 ```
-Specifies the maximum connection attempts to the CalDAV during startup.
+Specifies the maximum connection attempts to the CalDAV server.
 ```
 "CALDAV_SERVER_RETRY_ATTEMPTS": 3
 ```
@@ -82,7 +82,7 @@ Specifies the wait time in seconds between CalDAV connection attempts.
 ```
 "CALDAV_SERVER_RETRY_DELAY_SECONDS": 60
 ```
-Specifies the maximum retry attempts for failing event creations or deletions.
+Specifies the maximum retry attempts for event creations or deletions.
 ```
 "CALDAV_EVENT_RETRY_ATTEMPTS": 3
 ```
@@ -239,7 +239,7 @@ Specifies if a calendar event is listed as busy or free.
 
 
 **TRIGGER :: Event Time Zone**  
-Specifies the timezone the calendar event is created. List of timezones → https://<span></span>en.wikipedia.org/wiki/List_of_tz_database_time_zones
+Specifies the timezone the calendar event is created. Timezones → https://<span></span>en.wikipedia.org/wiki/List_of_tz_database_time_zones
 ```
 "EVENT_TIMEZONE"
 ```
