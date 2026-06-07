@@ -102,14 +102,14 @@ def load_config(settings_file: str = os.path.join(CONFIG_DIR, SETTINGS_FILE_NAME
             }
             logger.info(f"{LOG_PREFIX_APPLICATION} Settings File Load Successful | {format_log_data(log_data)}")
 
-	# Handle Missing Settings File
+    # Handle Missing Settings File
     except FileNotFoundError as e:
         _LOG_PREFIX_APP_ERR = '[Application]'
         log_data = {"app_conf_file": settings_path, "exception_type": type(e).__name__, "details": str(e)}
         print(f"crit  {datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]}: {_LOG_PREFIX_APP_ERR} Settings File Not Found     | {format_log_data(log_data)}")
         sys.exit(1)
 
-	# Handle Invalid Json Format In Settings File
+    # Handle Invalid Json Format In Settings File
     except json.JSONDecodeError as e:
         _LOG_PREFIX_APP_ERR = '[Application]'
         log_data = {"app_conf_file": settings_path, "exception_type": type(e).__name__, "details": str(e)}
@@ -146,7 +146,7 @@ def load_config(settings_file: str = os.path.join(CONFIG_DIR, SETTINGS_FILE_NAME
             trigger_array_count = 0
             trigger_key_count = 0
 
-			# Count Json Elements
+            # Count Json Elements
             def _recursive_count_triggers(item):
                 nonlocal trigger_object_count, trigger_array_count, trigger_key_count
                 if isinstance(item, dict):
@@ -163,7 +163,7 @@ def load_config(settings_file: str = os.path.join(CONFIG_DIR, SETTINGS_FILE_NAME
 
             _recursive_count_triggers(triggers_list)
 
-			# Log Successful Triggers File Load
+            # Log Successful Triggers File Load
             log_data = {
                 "app_conf_file": triggers_path,
                 "json_array_count": trigger_array_count,
@@ -179,7 +179,7 @@ def load_config(settings_file: str = os.path.join(CONFIG_DIR, SETTINGS_FILE_NAME
         config['TRIGGERS'] = []
         logger.warn(f"{LOG_PREFIX_APPLICATION} Continuing without triggers defined in file.")
 
-	# Handle Invalid Json Format In Triggers File
+    # Handle Invalid Json Format In Triggers File
     except json.JSONDecodeError as e:
         log_data = {"app_conf_file": triggers_path, "exception_type": type(e).__name__, "details": str(e)}
         logger.error(f"{LOG_PREFIX_APPLICATION} Invalid JSON in Triggers    | {format_log_data(log_data)}")
@@ -231,13 +231,13 @@ def connect_caldav(caldav_server_address: str, caldav_username: str, caldav_pass
         logger.error(f"{LOG_PREFIX_CALDAV} Server Connection Failed      | {format_log_data(log_data)}")
         return None
 
-	# Handle Network Errors During Initial Connection Attempt
+    # Handle Network Errors During Initial Connection Attempt
     except requests.exceptions.ConnectionError as e:
         log_data = {"caldav_host": os.getenv("CALDAV_HOST", caldav_host_info), "reason": "Connection Error", "exception_type": type(e).__name__, "details": str(e)}
         logger.error(f"{LOG_PREFIX_CALDAV} Server Connection Failed      | {format_log_data(log_data)}")
         return None
 
-	# Handle Other Unexpected Errors
+    # Handle Other Unexpected Errors
     except Exception as e:
         log_data = {"caldav_host": os.getenv("CALDAV_HOST", caldav_host_info), "reason": "Unexpected Error", "exception_type": type(e).__name__, "details": str(e)}
         logger.error(f"{LOG_PREFIX_CALDAV} Server Connection Failed      | {format_log_data(log_data)}")
@@ -254,7 +254,7 @@ def create_caldav_event(current_caldav_client: caldav.DAVClient, event_details: 
         logger.error(f"{LOG_PREFIX_CALDAV} Event Create Error | {format_log_data({'mqtt_topic': topic, **log_data_payload})}")
         return
 
-	# Construct iCal Event Payload
+    # Construct iCal Event Payload
     try:
         start_time = event_details['start_time']
         end_time = event_details['end_time']
@@ -279,7 +279,7 @@ def create_caldav_event(current_caldav_client: caldav.DAVClient, event_details: 
         end_event = "END:VEVENT\n" \
             "END:VCALENDAR\n"
 
-		# Build Optional Alarm Payload
+        # Build Optional Alarm Payload
         alarm_event = ""
         if event_details['event_trigger']:
             alarm_event = "BEGIN:VALARM\n" \
@@ -288,10 +288,10 @@ def create_caldav_event(current_caldav_client: caldav.DAVClient, event_details: 
                                "ACTION:AUDIO\n" \
                                "END:VALARM\n"
 
-		# Assemble Final Event Payload
+        # Assemble Final Event Payload
         str_event = main_event + alarm_event + end_event
 
-		# Parse and Validate Event Retry Settings
+        # Parse and Validate Event Retry Settings
         max_attempts = config.get('CALDAV_SERVER', {}).get('CALDAV_EVENT_RETRY_ATTEMPTS', 3)
         initial_retry_delay = config.get('CALDAV_SERVER', {}).get('CALDAV_EVENT_RETRY_DELAY_SECONDS', 60)
         initial_retry_delay = max(1, int(initial_retry_delay))
@@ -299,7 +299,7 @@ def create_caldav_event(current_caldav_client: caldav.DAVClient, event_details: 
 
         current_delay = initial_retry_delay
 
-		# Attempt Event Creation with Reconnection Logic
+        # Attempt Event Creation with Reconnection Logic
         for attempt in range(max_attempts):
             is_retryable_error = False
             try:
@@ -314,7 +314,7 @@ def create_caldav_event(current_caldav_client: caldav.DAVClient, event_details: 
                 try:
                     event_calendar = caldav.Calendar(client=current_caldav_client, url=event_calendar_url)
 
-				# Handle Exceptions During Calendar Object Instantiation
+                # Handle Exceptions During Calendar Object Instantiation
                 except Exception as cal_init_e:
                     log_data_instantiation_error_payload = {
                         "attempt": attempt + 1,
@@ -327,7 +327,7 @@ def create_caldav_event(current_caldav_client: caldav.DAVClient, event_details: 
                     logger.error(f"{LOG_PREFIX_CALDAV} Event Create Error (Instantiation) | {format_log_data({'mqtt_topic': topic, **log_data_instantiation_error_payload})}")
                     raise cal_init_e
 
-				# Push Event to Calendar Server
+                # Push Event to Calendar Server
                 caldav_event = event_calendar.save_event(str_event)
                 log_data_payload = {
                     "action": mqtt_action,
@@ -348,7 +348,7 @@ def create_caldav_event(current_caldav_client: caldav.DAVClient, event_details: 
                 logger.error(f"{LOG_PREFIX_CALDAV} Server Connection Failed      | {format_log_data(log_data)}")
                 break
 
-			# Handle CalDAV Event Create Errors
+            # Handle CalDAV Event Create Errors
             except DAVError as e:
                 current_attempt = attempt + 1
                 if e.args and isinstance(e.args[0], requests.exceptions.RequestException):
@@ -359,7 +359,7 @@ def create_caldav_event(current_caldav_client: caldav.DAVClient, event_details: 
                     log_data_payload = {"attempt": current_attempt, "max_attempts": max_attempts, "reason": "CalDAV Server Error", "exception_type": type(e).__name__, "details": str(e)}
                     logger.error(f"{LOG_PREFIX_CALDAV} Event Create Error | {format_log_data({'mqtt_topic': topic, **log_data_payload})}")
 
-			# Handle CalDAV Network Errors During Event Creation
+            # Handle CalDAV Network Errors During Event Creation
             except requests.exceptions.RequestException as e:
                 is_retryable_error = True
                 current_attempt = attempt + 1
@@ -380,7 +380,7 @@ def create_caldav_event(current_caldav_client: caldav.DAVClient, event_details: 
                     logger.error(f"{LOG_PREFIX_CALDAV} Event Create Error | {format_log_data({'mqtt_topic': topic, **log_data_payload})}")
                     break
 
-			# Handle Retry Delay and Exponential Backoff
+            # Handle Retry Delay and Exponential Backoff
             if is_retryable_error:
                 if attempt + 1 < max_attempts:
                     log_data_retry = {
@@ -399,17 +399,17 @@ def create_caldav_event(current_caldav_client: caldav.DAVClient, event_details: 
             else:
                 break
 
-	# Handle Missing Trigger Keys
+    # Handle Missing Trigger Keys
     except KeyError as e:
         log_data_payload = {"reason": "Config Error - Missing event detail key", "key": str(e)}
         logger.error(f"{LOG_PREFIX_CALDAV} Event Create Error | {format_log_data({'mqtt_topic': topic, **log_data_payload})}")
 
-	# Handle Missing Trigger Values
+    # Handle Missing Trigger Values
     except ValueError as e:
         log_data_payload = {"reason": "Data Error - Invalid event detail value", "details": str(e)}
         logger.error(f"{LOG_PREFIX_CALDAV} Event Create Error | {format_log_data({'mqtt_topic': topic, **log_data_payload})}")
 
-	# Handle Type Errors
+    # Handle Type Errors
     except TypeError as e:
          if 'int()' in str(e) and 'CALDAV_EVENT_RETRY_DELAY_SECONDS' in str(config.get('CALDAV_SERVER', {})):
               log_data = {"reason": "Config Error - CALDAV_EVENT_RETRY_DELAY_SECONDS must be an integer", "value": config.get('CALDAV_SERVER', {}).get('CALDAV_EVENT_RETRY_DELAY_SECONDS')}
@@ -445,7 +445,7 @@ def delete_caldav_event(current_caldav_client: caldav.DAVClient, event_url: str,
                     current_caldav_client = new_client
                     caldav_client = new_client
 
-			# Delete Event from Calendar Server
+            # Delete Event from Calendar Server
             event = caldav.Event(client=current_caldav_client, url=event_url)
             event.delete()
             log_data_payload = {
@@ -472,7 +472,7 @@ def delete_caldav_event(current_caldav_client: caldav.DAVClient, event_url: str,
                 log_data_payload = {"reason": "CalDAV Server Error", "exception_type": type(e).__name__, "details": str(e)}
                 logger.error(f"{LOG_PREFIX_CALDAV} Event Delete Error | {format_log_data({'mqtt_topic': topic, **log_data_payload})}")
 
-		# Handle CalDAV Network Errors During Event Deletion
+        # Handle CalDAV Network Errors During Event Deletion
         except requests.exceptions.RequestException as e:
             is_retryable_error = True
             current_attempt = attempt + 1
@@ -493,7 +493,7 @@ def delete_caldav_event(current_caldav_client: caldav.DAVClient, event_url: str,
                 logger.error(f"{LOG_PREFIX_CALDAV} Event Delete Error | {format_log_data({'mqtt_topic': topic, **log_data_payload})}")
                 break
 
-		# Handle Retry Delay and Exponential Backoff
+        # Handle Retry Delay and Exponential Backoff
         if is_retryable_error:
             if attempt + 1 < max_attempts:
                 log_data_retry = {
@@ -521,15 +521,15 @@ def find_last_created_event_url() -> Optional[str]:
     if not os.path.exists(log_file_path):
         return None
 
-	# Initialize Deleted Event Tracking
+    # Initialize Deleted Event Tracking
     deleted_event_urls = set()
 
-	# Parse Log File to Extract Event States
+    # Parse Log File to Extract Event States
     try:
         with open(log_file_path, 'r', encoding='utf-8') as logfile:
             lines = logfile.readlines()
 
-			# Scan Logs Backwards to Match Created and Deleted Events
+            # Scan Logs Backwards to Match Created and Deleted Events
             for line in reversed(lines):
                 if " | " not in line or "event_path='" not in line:
                     continue
@@ -548,7 +548,7 @@ def find_last_created_event_url() -> Optional[str]:
                     if event_url not in deleted_event_urls:
                         return event_url
 
-	# Handle Log Parsing Errors
+    # Handle Log Parsing Errors
     except (IOError, Exception) as e:
         log_data = {"file_path": log_file_path, "exception_type": type(e).__name__, "details": str(e)}
         logger.error(f"{LOG_PREFIX_APPLICATION} Log Parsing Error    | {format_log_data(log_data)}")
@@ -573,7 +573,7 @@ def on_connect(client: MQTTClient, userdata, flags, rc: int, config: Dict[str, A
             log_data_no_triggers = {'reason': 'No triggers defined in configuration, MQTT client will listen but perform no actions.'}
             logger.warn(f"{LOG_PREFIX_MQTT} Config Error       | {format_log_data(log_data_no_triggers)}")
 
-		# Parse and Validate MQTT QoS Level
+        # Parse and Validate MQTT QoS Level
         try:
             mqtt_qos = int(config.get('MQTT_SERVER', {}).get('MQTT_QOS', 1))
             if mqtt_qos not in [0, 1, 2]:
@@ -581,7 +581,7 @@ def on_connect(client: MQTTClient, userdata, flags, rc: int, config: Dict[str, A
         except (ValueError, TypeError):
             mqtt_qos = 1
 
-		# Subscribe to Configured Trigger Topics
+        # Subscribe to Configured Trigger Topics
         for trigger in triggers:
             try:
                 topic_to_subscribe = trigger['MQTT_TOPIC']
@@ -613,34 +613,34 @@ def on_message(caldav_client: caldav.DAVClient, config: Dict[str, Any], mqtt_cli
         logger.warn(f"{LOG_PREFIX_SYSTEM} Shutdown in progress, ignoring new MQTT message on topic '{mqtt_message.topic}'.")
         return
 
-	# Extract Topic and Decode Payload
+    # Extract Topic and Decode Payload
     topic = mqtt_message.topic
     payload_str = mqtt_message.payload.decode('utf-8')
 
-	# Verify CalDAV Client is Initialized
+    # Verify CalDAV Client is Initialized
     if caldav_client is None:
         log_data = {"mqtt_topic": topic, "reason": "CalDAV client not initialized, cannot process message"}
         logger.error(f"{LOG_PREFIX_APPLICATION} Processing Error   | {format_log_data(log_data)}")
         return
 
-	# Parse and Log Incoming MQTT Event
+    # Parse and Log Incoming MQTT Event
     try:
         parsed_mqtt_event: Dict[str, Any] = json.loads(payload_str)
         mqtt_action = parsed_mqtt_event.get('action', 'unknown')
         log_data_received = {'mqtt_topic': topic, **parsed_mqtt_event}
         logger.info(f"{LOG_PREFIX_APPLICATION} Event Received | {format_log_data(log_data_received)}")
 
-		# Scan Configured Triggers for Topic Matches
+        # Scan Configured Triggers for Topic Matches
         for config_trigger in config.get('TRIGGERS', []):
             if config_trigger['MQTT_TOPIC'] != topic:
                 continue
 
-			# Match Received Event against Configured Trigger
+            # Match Received Event against Configured Trigger
             if match_mqtt_event(parsed_mqtt_event, config_trigger, mqtt_message):
                 log_data_matched = {'mqtt_topic': topic, **parsed_mqtt_event}
                 logger.info(f"{LOG_PREFIX_APPLICATION} Event Matched  | {format_log_data(log_data_matched)}")
 
-				# Validate Configured Trigger Mode
+                # Validate Configured Trigger Mode
                 trigger_mode = config_trigger.get('MODE', '').lower()
                 if not validate_mode(config_trigger, mqtt_message):
                     log_data_payload = {
@@ -650,13 +650,13 @@ def on_message(caldav_client: caldav.DAVClient, config: Dict[str, Any], mqtt_cli
                     logger.error(f"{LOG_PREFIX_APPLICATION} Event Skipped  | {format_log_data({'mqtt_topic': topic, **log_data_payload})}")
                     continue
 
-				# Process Event Creation Trigger
+                # Process Event Creation Trigger
                 if trigger_mode == "create":
                     event_details = None
                     try:
                         event_details = create_event_details(config_trigger, mqtt_action)
 
-						# Log Actioned Event Details
+                        # Log Actioned Event Details
                         if "action" in parsed_mqtt_event:
                             event_location = config_trigger.get('EVENT_LOCATION', '').replace('\\,', ',')
                             log_data_payload = {
@@ -671,7 +671,7 @@ def on_message(caldav_client: caldav.DAVClient, config: Dict[str, Any], mqtt_cli
                         threading.Thread(target=create_caldav_event, args=(caldav_client, event_details, topic, config), daemon=True).start()
                         break
 
-					# Handle Invalid Configuration Value
+                    # Handle Invalid Configuration Value
                     except ValueError as e:
                         log_data_payload = {
                             "action": mqtt_action,
@@ -680,7 +680,7 @@ def on_message(caldav_client: caldav.DAVClient, config: Dict[str, Any], mqtt_cli
                         logger.error(f"{LOG_PREFIX_APPLICATION} Event Skipped  | {format_log_data({'mqtt_topic': topic, **log_data_payload})}")
                         break
 
-					# Handle Missing Configuration Value
+                    # Handle Missing Configuration Value
                     except KeyError as e:
                         log_data_payload = {
                             "action": mqtt_action,
@@ -690,13 +690,13 @@ def on_message(caldav_client: caldav.DAVClient, config: Dict[str, Any], mqtt_cli
                         logger.error(f"{LOG_PREFIX_APPLICATION} Event Skipped  | {format_log_data({'mqtt_topic': topic, **log_data_payload})}")
                         break
 
-					# Handle Unexpected Errors
+                    # Handle Unexpected Errors
                     except Exception as event_creation_error:
                         log_data_payload = {"reason": "Unexpected Error during creation handling", "exception_type": type(event_creation_error).__name__, "details": str(event_creation_error)}
                         logger.error(f"{LOG_PREFIX_APPLICATION} Event Create Error | {format_log_data({'mqtt_topic': topic, **log_data_payload})}")
                         break
 
-				# Process Event Deletion Trigger
+                # Process Event Deletion Trigger
                 elif trigger_mode == "delete":
                     log_data_action_payload = {
                         "action": mqtt_action,
@@ -704,7 +704,7 @@ def on_message(caldav_client: caldav.DAVClient, config: Dict[str, Any], mqtt_cli
                     }
                     logger.info(f"{LOG_PREFIX_APPLICATION} Event Actioned | {format_log_data({'mqtt_topic': topic, **log_data_action_payload})}")
 
-					# Locate and Queue Event Deletion
+                    # Locate and Queue Event Deletion
                     try:
                         event_url_to_delete = find_last_created_event_url()
                         if event_url_to_delete:
@@ -716,23 +716,23 @@ def on_message(caldav_client: caldav.DAVClient, config: Dict[str, Any], mqtt_cli
                             }
                             logger.warn(f"{LOG_PREFIX_APPLICATION} Event Skipped  | {format_log_data({'mqtt_topic': topic, **log_data_skip_payload})}")
 
-					# Handle Unexpected Deletion Errors
+                    # Handle Unexpected Deletion Errors
                     except Exception as event_deletion_error:
                         log_data_payload = {"reason": "Unexpected Error during deletion handling", "exception_type": type(event_deletion_error).__name__, "details": str(event_deletion_error)}
                         logger.error(f"{LOG_PREFIX_APPLICATION} Event Delete Error | {format_log_data({'mqtt_topic': topic, **log_data_payload})}")
                     break
 
-	# Handle MQTT Payload Decoding Errors
+    # Handle MQTT Payload Decoding Errors
     except json.JSONDecodeError as json_decode_error:
         log_data = {"mqtt_topic": topic, "payload": payload_str, "exception_type": type(json_decode_error).__name__, "details": str(json_decode_error)}
         logger.error(f"{LOG_PREFIX_APPLICATION} Invalid JSON Received         | {format_log_data(log_data)}")
 
-	# Handle Missing MQTT Key Errors
+    # Handle Missing MQTT Key Errors
     except KeyError as e:
         log_data = {"mqtt_topic": topic, "reason": "Config Error - Missing key in trigger or MQTT event", "key": str(e)}
         logger.error(f"{LOG_PREFIX_APPLICATION} Processing Error   | {format_log_data(log_data)}")
 
-	# Handle Unexpected Errors
+    # Handle Unexpected Errors
     except Exception as generic_message_error:
         log_data = {"mqtt_topic": topic, "reason": "Unexpected Error", "exception_type": type(generic_message_error).__name__, "details": str(generic_message_error)}
         logger.error(f"{LOG_PREFIX_APPLICATION} Processing Error   | {format_log_data(log_data)}")
@@ -755,7 +755,7 @@ def validate_mode(trigger: Dict[str, Any], message: MQTTMessage) -> bool:
     if 'MODE' not in trigger:
          return False
 
-	# Verify Trigger Mode is Allowed
+    # Verify Trigger Mode is Allowed
     allowed_modes = ["create", "delete"]
     if trigger.get('MODE', '').lower() not in allowed_modes:
        return False
@@ -784,7 +784,7 @@ def adjust_event_time(now_datetime: datetime, offset: str) -> datetime:
         adjusted_time = now_datetime + timedelta(minutes=offset_minutes)
         return adjusted_time
 
-	# Handle Non-Integer Offset Value
+    # Handle Non-Integer Offset Value
     except ValueError:
         raise ValueError("Invalid offset value")
 
@@ -802,27 +802,27 @@ def create_event_details(config_trigger: Dict[str, Any], mqtt_action: str) -> Op
                  raise ValueError("Invalid EVENT_OFFSET value configured")
             now_datetime = adjusted_time
 
-	# Handle Invalid Trigger Event Offset
+    # Handle Invalid Trigger Event Offset
     except ValueError as e:
         raise ValueError(f"Invalid EVENT_OFFSET value configured: {event_offset}") from e
 
-	# Handle Missing Trigger Event Offset
+    # Handle Missing Trigger Event Offset
     except KeyError as e:
         raise KeyError(f"Missing EVENT_OFFSET key in trigger config") from e
 
-	# Apply Event Rounding
+    # Apply Event Rounding
     try:
         event_rounding = config_trigger.get('EVENT_ROUNDING')
         if event_rounding and event_rounding != '0':
             now_datetime = roundTime(now_datetime, timedelta(minutes=int(event_rounding)))
 
-		# Calculate Event End Time
+        # Calculate Event End Time
         event_duration = config_trigger.get('EVENT_DURATION')
         if not event_duration:
             raise KeyError("Missing EVENT_DURATION key in trigger config")
         end_datetime: datetime = now_datetime + timedelta(minutes=int(event_duration))
 
-		# Format iCal Event Timestamps
+        # Format iCal Event Timestamps
         event_seconds = config_trigger.get('EVENT_SECONDS', 'False')
         use_seconds = str(event_seconds).lower() == 'true'
         if not use_seconds:
@@ -832,7 +832,7 @@ def create_event_details(config_trigger: Dict[str, Any], mqtt_action: str) -> Op
             start_time = now_datetime.strftime('%Y%m%dT%H%M%S')
             end_time = end_datetime.strftime('%Y%m%dT%H%M%S')
 
-		# Define Mandatory Event Keys
+        # Define Mandatory Event Keys
         required_keys = [
             'EVENT_CALENDAR', 'EVENT_TIMEZONE', 'EVENT_LOCATION', 'EVENT_DESCRIPTION',
             'EVENT_URL', 'EVENT_SUMMARY', 'EVENT_GEO', 'EVENT_TRANSP',
@@ -844,7 +844,7 @@ def create_event_details(config_trigger: Dict[str, Any], mqtt_action: str) -> Op
             if key not in config_trigger:
                 raise KeyError(f"Missing required key in trigger config: {key}")
 
-		# Compile Validated Event Details
+        # Compile Validated Event Details
         event_details: Dict[str, Any] = {
             'mqtt_action': mqtt_action,
             'start_time': start_time,
@@ -862,11 +862,11 @@ def create_event_details(config_trigger: Dict[str, Any], mqtt_action: str) -> Op
         }
         return event_details
 
-	# Handle Trigger Non-Integer Value
+    # Handle Trigger Non-Integer Value
     except (ValueError, TypeError) as e:
          raise ValueError(f"Invalid non-integer value for EVENT_ROUNDING or EVENT_DURATION: {e}") from e
 
-	# Handle Trigger Missing Key
+    # Handle Trigger Missing Key
     except KeyError as e:
         raise KeyError(f"Missing key in trigger config during event detail creation: {e}") from e
 
@@ -885,7 +885,7 @@ if __name__ == '__main__':
     }
     logger.info(f"[SYS] Application Start Initiated   | {format_log_data(_log_data_app_start)}")
 
-	# Load Application Configuration
+    # Load Application Configuration
     config = load_config()
     app_path = os.path.abspath(__file__)
     log_data_start = {"app_main_file": app_path, "app_name": APP_NAME, "app_version": VERSION}
@@ -899,7 +899,7 @@ if __name__ == '__main__':
         log_data_lock = {"app_lock_file": LOCK_FILE_PATH, "app_pid": os.getpid()}
         logger.info(f"{LOG_PREFIX_SYSTEM} Application Lock File Created | {format_log_data(log_data_lock)}")
 
-	# Handle Existing Lock File
+    # Handle Existing Lock File
     except FileExistsError:
         pid = "unknown"
         try:
@@ -919,7 +919,7 @@ if __name__ == '__main__':
                             if 'python' not in cmdline and APP_NAME.lower() not in cmdline and 'main.py' not in cmdline:
                                 is_recycled = True
 
-					# Fallback Check for other Unix-like Systems
+                    # Fallback Check for other Unix-like Systems
                     except Exception:
                         pass
                 elif sys.platform != 'win32':
@@ -936,13 +936,13 @@ if __name__ == '__main__':
                     logger.warn(f"{LOG_PREFIX_SYSTEM} Stale Lock File Detected      | {format_log_data(log_data_stale)}")
                     raise OSError(errno.ESRCH, "Process is recycled")
 
-				# Abort Startup as Application is Already Running
+                # Abort Startup as Application is Already Running
                 log_data_lock = {"app_lock_file": LOCK_FILE_PATH, "app_pid": pid}
                 logger.error(f"{LOG_PREFIX_SYSTEM} Application Lock File Exists  | {format_log_data(log_data_lock)}")
                 logger.critical(f"{LOG_PREFIX_SYSTEM} Application Already Running?  | {format_log_data(log_data_lock)}")
                 sys.exit(1)
 
-			# Handle Lock File Errors For Non-existent Process
+            # Handle Lock File Errors For Non-existent Process
             except OSError as e:
                 if e.errno == errno.ESRCH:
                     log_data_stale = {"app_lock_file": LOCK_FILE_PATH, "app_pid": pid, "reason": "PID not found, assuming stale lock file"}
@@ -962,13 +962,13 @@ if __name__ == '__main__':
                             log_data_lock = {"app_lock_file": LOCK_FILE_PATH, "app_pid": os.getpid()}
                             logger.info(f"{LOG_PREFIX_SYSTEM} Application Lock File Created | {format_log_data(log_data_lock)}")
 
-						# Handle Lock File Re-creation Errors
+                        # Handle Lock File Re-creation Errors
                         except Exception as create_e:
                             log_data_lock_err = {"app_lock_file": LOCK_FILE_PATH, "reason": "Failed to create lock file after removing stale", "exception_type": type(create_e).__name__, "details": str(create_e)}
                             logger.critical(f"{LOG_PREFIX_SYSTEM} Application Lock File Error   | {format_log_data(log_data_lock_err)}")
                             sys.exit(1)
 
-					# Handle Stale Lock File Errors
+                    # Handle Stale Lock File Errors
                     except OSError as remove_e:
                         log_data_remove_err = {"app_lock_file": LOCK_FILE_PATH, "reason": "Failed to remove lock file on MQTT connection exit", "exception_type": type(remove_e).__name__, "details": str(remove_e)}
                         logger.error(f"{LOG_PREFIX_SYSTEM} Application Lock File Error   | {format_log_data(remove_e)}")
@@ -983,7 +983,7 @@ if __name__ == '__main__':
                     logger.error(f"{LOG_PREFIX_SYSTEM} Lock File Check Error       | {format_log_data(log_data_oserr)}")
                     sys.exit(1)
 
-		# Handle Lock File Content Errors
+        # Handle Lock File Content Errors
         except (ValueError, FileNotFoundError, IOError) as e:
             log_data_invalid = {"app_lock_file": LOCK_FILE_PATH, "pid_read": pid, "reason": "Invalid or unreadable lock file content, assuming stale", "exception_type": type(e).__name__, "details": str(e)}
             logger.warn(f"{LOG_PREFIX_SYSTEM} Invalid Lock File Detected    | {format_log_data(log_data_invalid)}")
@@ -1006,19 +1006,19 @@ if __name__ == '__main__':
                     logger.critical(f"{LOG_PREFIX_SYSTEM} Application Lock File Error   | {format_log_data(log_data_lock_err)}")
                     sys.exit(1)
 
-			# Handle Invalid Lock File Errors
+            # Handle Invalid Lock File Errors
             except OSError as remove_e:
                 log_data_remove_err = {"app_lock_file": LOCK_FILE_PATH, "reason": "Failed to remove invalid lock file", "exception_type": type(remove_e).__name__, "details": str(remove_e)}
                 logger.error(f"{LOG_PREFIX_SYSTEM} Application Lock File Error   | {format_log_data(remove_e)}")
                 sys.exit(1)
 
-	# Handle Unexpected Lock File Creation Errors
+    # Handle Unexpected Lock File Creation Errors
     except Exception as e:
         log_data_lock_err = {"app_lock_file": LOCK_FILE_PATH, "reason": "Failed to create lock file", "exception_type": type(e).__name__, "details": str(e)}
         logger.critical(f"{LOG_PREFIX_SYSTEM} Application Lock File Error   | {format_log_data(log_data_lock_err)}")
         sys.exit(1)
 
-	# Get Essential Configuration Settings
+    # Get Essential Configuration Settings
     try:
         CALDAV_SERVER_ADDRESS = config['CALDAV_SERVER']['CALDAV_SERVER_ADDRESS']
         CALDAV_USERNAME = config['CALDAV_SERVER']['CALDAV_USERNAME']
@@ -1042,7 +1042,7 @@ if __name__ == '__main__':
              logger.error(f"{LOG_PREFIX_SYSTEM} Application Lock File Error   | {format_log_data(log_data_lock_rem_err)}")
         sys.exit(1)
 
-	# Handle Unexpected Configuration Access Errors
+    # Handle Unexpected Configuration Access Errors
     except Exception as e:
         log_data_other_error = {"reason": "Unexpected error accessing configuration", "exception_type": type(e).__name__, "details": str(e)}
         logger.critical(f"{LOG_PREFIX_APPLICATION} Config Error       | {format_log_data(log_data_other_error)}")
@@ -1067,44 +1067,44 @@ if __name__ == '__main__':
         logger.warn(f"{LOG_PREFIX_APPLICATION} Config Error       | {format_log_data(log_data_warn)}")
         max_caldav_attempts = 3
 
-	# Parse and Validate CalDAV Retry Delay Seconds
+    # Parse and Validate CalDAV Retry Delay Seconds
     try:
         caldav_retry_delay = int(config.get('CALDAV_SERVER', {}).get('CALDAV_SERVER_RETRY_DELAY_SECONDS', 10))
         if caldav_retry_delay < 0: caldav_retry_delay = 10
 
-	# Handle CalDAV Server Retry Delay Second Errors
+    # Handle CalDAV Server Retry Delay Second Errors
     except (ValueError, TypeError):
         config_value = config.get('CALDAV_SERVER', {}).get('CALDAV_SERVER_RETRY_DELAY_SECONDS', 'Not Found')
         log_data_warn = {"reason": "Invalid config value type", "config_key": "CALDAV_SERVER_RETRY_DELAY_SECONDS", "value": config_value}
         logger.warn(f"{LOG_PREFIX_APPLICATION} Invalid or missing CALDAV_SERVER_RETRY_DELAY_SECONDS, using default: 10 | {format_log_data(log_data_warn)}")
         caldav_retry_delay = 10
 
-	# Enforce Global HTTP Request Timeout
+    # Enforce Global HTTP Request Timeout
     try:
         caldav_timeout = int(config.get('CALDAV_SERVER', {}).get('CALDAV_SERVER_TIMEOUT_SECONDS', 30))
         if caldav_timeout <= 0: caldav_timeout = 30
 
-	# Handle CalDAV Timeout Second Errors
+    # Handle CalDAV Timeout Second Errors
     except (ValueError, TypeError):
         config_value = config.get('CALDAV_SERVER', {}).get('CALDAV_SERVER_TIMEOUT_SECONDS', 'Not Found')
         log_data_warn = {"reason": "Invalid config value type", "config_key": "CALDAV_SERVER_TIMEOUT_SECONDS", "value": config_value}
         logger.warn(f"{LOG_PREFIX_APPLICATION} Invalid or missing CALDAV_SERVER_TIMEOUT_SECONDS, using default: 30 | {format_log_data(log_data_warn)}")
         caldav_timeout = 30
 
-	# Apply Global HTTP Timeout Patch
+    # Apply Global HTTP Timeout Patch
     _original_session_request = requests.Session.request
     def patched_session_request(self, method, url, *args, **kwargs):
         kwargs.setdefault('timeout', caldav_timeout)
         return _original_session_request(self, method, url, *args, **kwargs)
     requests.Session.request = patched_session_request
 
-	# Connect to CalDAV Server with Retries
+    # Connect to CalDAV Server with Retries
     for attempt in range(max_caldav_attempts):
         caldav_host_info = f"{CALDAV_USERNAME}@{CALDAV_SERVER_ADDRESS}"
         log_data_conn_init = {"caldav_host": caldav_host_info, "attempt": attempt + 1, "max_attempts": max_caldav_attempts}
         logger.info(f"{LOG_PREFIX_CALDAV} Server Connection Initiated   | {format_log_data(log_data_conn_init)}")
 
-		# Execute Connection and Handle Retry Delay
+        # Execute Connection and Handle Retry Delay
         caldav_client = connect_caldav(CALDAV_SERVER_ADDRESS, CALDAV_USERNAME, CALDAV_PASSWORD)
         if caldav_client is not None:
             break
@@ -1116,7 +1116,7 @@ if __name__ == '__main__':
             else:
                 pass
 
-	# Abort Startup as CalDAV Connection Failed
+    # Abort Startup as CalDAV Connection Failed
     if caldav_client is None:
         log_data_exit = {"reason": f"Initial CalDAV connection failed after {max_caldav_attempts} attempts. Cannot proceed."}
         logger.critical(f"{LOG_PREFIX_SYSTEM} Application Exit              | {format_log_data(log_data_exit)}")
@@ -1125,7 +1125,7 @@ if __name__ == '__main__':
         except FileNotFoundError:
             pass
 
-		# Handle Lock File Removal Errors
+        # Handle Lock File Removal Errors
         except Exception as lock_e:
              log_data_lock_rem_err = {"app_lock_file": LOCK_FILE_PATH, "reason": "Failed to remove lock file on CalDAV connection exit", "exception_type": type(lock_e).__name__, "details": str(lock_e)}
              logger.error(f"{LOG_PREFIX_SYSTEM} Application Lock File Error   | {format_log_data(log_data_lock_rem_err)}")
@@ -1156,7 +1156,7 @@ if __name__ == '__main__':
         log_data = {"reason": shutdown_reason, "signal": signal_name}
         logger.warn(f"{LOG_PREFIX_SYSTEM} Initiating Graceful Shutdown  | {format_log_data(log_data)}")
         
-		# Parse and Validate QoS Disconnect Delay
+        # Parse and Validate QoS Disconnect Delay
         def graceful_disconnect():
             try:
                 if mqtt_client.is_connected():
@@ -1199,7 +1199,7 @@ if __name__ == '__main__':
         mqtt_port = int(MQTT_SERVER_PORT)
         mqtt_client.connect(MQTT_SERVER_ADDRESS, port=mqtt_port)
 
-	# Handle MQTT Port Errors
+    # Handle MQTT Port Errors
     except ValueError as e:
         mqtt_host_info_fail = f"{MQTT_USERNAME}@{MQTT_SERVER_ADDRESS}:{MQTT_SERVER_PORT}"
         log_data = {"mqtt_host": mqtt_host_info_fail, "reason": "Invalid MQTT Port configured", "exception_type": type(e).__name__, "details": str(e)}
@@ -1241,7 +1241,7 @@ if __name__ == '__main__':
         log_data = {"reason": "KeyboardInterrupt Exception Caught Directly"}
         logger.warn(f"{LOG_PREFIX_USER} Keyboard Interrupt Exception  | {format_log_data(log_data)}")
 
-	# Handle Unexpected Errors During MQTT Loop
+    # Handle Unexpected Errors During MQTT Loop
     except Exception as e:
         log_data = {"exception_type": type(e).__name__, "details": str(e)}
         logger.error(f"{LOG_PREFIX_APPLICATION} Main Loop Error    | {format_log_data(log_data)}")
@@ -1255,7 +1255,7 @@ if __name__ == '__main__':
                  if mqtt_client.is_connected():
                      if not SHUTDOWN_REQUESTED:
                          mqtt_client.disconnect()
-                         mqtt_host_info_final = f"{config.get('MQTT_SERVER', {}).get('MQTT_USERNAME', 'unknown')}@{config.get('MQTT_SERVER', {}).get('MQTT_SERVER_ADDRESS', 'unknown')}:{config.get('MQTT_SERVER', {}).get('MQTT_SERVER_PORT', 'unknown')}"
+                         mqtt_host_info_final = f"{config.get('MQTT_SERVER', {}).get('MQTT_SERVER_ADDRESS', 'unknown')}:{config.get('MQTT_SERVER', {}).get('MQTT_SERVER_PORT', 'unknown')}"
                          log_data_disconnect = {"mqtt_host": mqtt_host_info_final}
                          logger.info(f"{LOG_PREFIX_MQTT} Broker Disconnect Successful  | {format_log_data(log_data_disconnect)}")
                      else:
@@ -1292,7 +1292,7 @@ if __name__ == '__main__':
                 log_data_lock_other = {"app_lock_file": LOCK_FILE_PATH, "current_pid": current_pid, "lock_pid": lock_pid}
                 logger. warn(f"{LOG_PREFIX_SYSTEM} Application Lock File Blocked | {format_log_data(log_data_lock_other)}")
 
-    	# Handle Lock File Removal Errors
+        # Handle Lock File Removal Errors
         except Exception as e:
             log_data_lock_rem_err = {"app_lock_file": LOCK_FILE_PATH, "reason": "Failed to remove lock file", "exception_type": type(e).__name__, "details": str(e)}
             logger.error(f"{LOG_PREFIX_SYSTEM} Application Lock File Error   | {format_log_data(log_data_lock_rem_err)}")
