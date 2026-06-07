@@ -16,7 +16,7 @@
     "MQTT_USERNAME": "username",
     "MQTT_PASSWORD": "password",
     "MQTT_QOS": 1,
-	"MQTT_QOS_DISCONNECT_SECONDS": 2.0
+    "MQTT_QOS_DISCONNECT_SECONDS": 2.0
   },
 
   "CALDAV_SERVER":{
