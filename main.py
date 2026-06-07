@@ -1290,7 +1290,7 @@ if __name__ == '__main__':
                     pass
             else:
                 log_data_lock_other = {"app_lock_file": LOCK_FILE_PATH, "current_pid": current_pid, "lock_pid": lock_pid}
-                logger. warn(f"{LOG_PREFIX_SYSTEM} Application Lock File Blocked | {format_log_data(log_data_lock_other)}")
+                logger.warn(f"{LOG_PREFIX_SYSTEM} Application Lock File Blocked | {format_log_data(log_data_lock_other)}")
 
         # Handle Lock File Removal Errors
         except Exception as e:
