@@ -1,5 +1,3 @@
-<img src="mqtt2caldav.png" width="300" height="131">  
-
 # mqtt2caldav  
 This project reads MQTT events and creates predefined CALDAV events.  
 <br />
