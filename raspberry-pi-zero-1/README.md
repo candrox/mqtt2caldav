@@ -1,5 +1,5 @@
 # mqtt2caldav  
-This project reads MQTT events and creates predefined CALDAV events.  
+This project reads MQTT events and creates predefined CALDAV events.
 <br />
 <br />
 
@@ -15,7 +15,7 @@ mqtt2caldav is licensed under the [GNU GENERAL PUBLIC LICENSE Version 3](https:/
 * MQTT Broker (e.g. [Eclipse Mosquitto](https://mosquitto.org/))
 * CALDAV Server (e.g. [NextCloud](https://github.com/nextcloud/server), [Baïkal](https://github.com/sabre-io/Baikal), [Radicale](https://github.com/Kozea/Radicale))
 
-This version runs on a Raspberry Pi Zero 1  with the following:
+This version runs on a Raspberry Pi Zero 1 with the following:
 * [Python 3.7.3](https://www.python.org/downloads/release/python-373)
 * [caldav 0.71](https://pypi.org/project/caldav/)
 * [icalendar 4.0.3](https://pypi.org/project/icalendar/4.0.3/)
