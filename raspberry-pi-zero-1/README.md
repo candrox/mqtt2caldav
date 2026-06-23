@@ -12,15 +12,15 @@ mqtt2caldav is licensed under the [GNU GENERAL PUBLIC LICENSE Version 3](https:/
 
 
 ## Requirements  
-* MQTT Broker (e.g. [Eclipse Mosquitto](https://mosquitto.org/))
-* CALDAV Server (e.g. [NextCloud](https://github.com/nextcloud/server), [Baïkal](https://github.com/sabre-io/Baikal), [Radicale](https://github.com/Kozea/Radicale))
-
-This version runs on a Raspberry Pi Zero 1 with the following:
-* [Python 3.7.3](https://www.python.org/downloads/release/python-373)
+This version requires a CalDAV server connection such as [Apple Calendar](https://www.icloud.com/calendar), [Google Calendar](https://calendar.google.com/) or self-hosted with [NextCloud](https://github.com/nextcloud/server), [Baïkal](https://github.com/sabre-io/Baikal), [Radicale](https://github.com/Kozea/Radicale), etc. It has been tested with the following software packages: 
+* [Python 3.7.3](https://www.python.org/downloads/release/python-373) 
+* [requests 2.21.0](https://pypi.org/project/requests/2.21.0/) 
 * [caldav 0.71](https://pypi.org/project/caldav/)
+* [nodejs 12.9.1](https://unofficial-builds.nodejs.org/download/release/v12.9.1/) 
 * [icalendar 4.0.3](https://pypi.org/project/icalendar/4.0.3/)
+* [mosquitto 1.5.7](https://mosquitto.org/files/source/) 
 * [paho-mqtt 1.5.1](https://pypi.org/project/paho-mqtt/)
-* [requests 2.21.0](https://pypi.org/project/requests/2.21.0/)
+* [zigbee2mqtt 1.16.2](https://github.com/Koenkk/zigbee2mqtt/releases/tag/1.16.2)
 <br />
 <br />
 
