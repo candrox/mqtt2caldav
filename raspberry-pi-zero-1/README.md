@@ -1,16 +1,3 @@
-# mqtt2caldav  
-This project reads MQTT events and creates predefined CALDAV events. It is optimized for deployment on a Raspberry Pi Zero 1.
-<br />
-<br />
-
-
-## Licence 
-mqtt2caldav is licensed under the [GNU GENERAL PUBLIC LICENSE Version 3](https://github.com/107208579/mqtt2caldav/blob/main/LICENSE.gpl).
-<br />
-<br />
-<br />
-
-
 ## Requirements  
 This version requires a CalDAV server connection ([Apple Calendar](https://www.icloud.com/calendar), [Google Calendar](https://calendar.google.com/) or self-hosted [NextCloud](https://github.com/nextcloud/server), [Baïkal](https://github.com/sabre-io/Baikal), [Radicale](https://github.com/Kozea/Radicale)) and the following software packages: 
 * [Python 3.7.3](https://www.python.org/downloads/release/python-373) 
