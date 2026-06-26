@@ -5,14 +5,14 @@
 <br />
 <br />
 
-# Core Flow
+## Core Flow
 **Subscribe**: The application runs as a persistent service listening to specific MQTT topics.<br />
 **Process**: Upon receiving a designated trigger payload, the service builds a calendar event.<br />
 **Publish**: The event is pushed directly to a CalDAV server.<br />
 <br />
 <br />
 
-# Target Platforms
+## Target Platforms
 Because different generations of the Raspberry Pi Zero use distinct system architectures, this repository maintains separate directories tailored to each environment with different :
 * **[Raspberry Pi Zero 1](./raspberry-pi-zero-1/)**
   * Optimiziation: Single-core ARMv6 (32-bit environment)
